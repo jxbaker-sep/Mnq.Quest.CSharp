@@ -16,10 +16,14 @@ public class Problem03
   }
 
   private string Program = @"
-INIT 0 INIT 0 R
+INIT 0 LZ 0 R
 INIT 1 INIT 1 R
 INIT _ INCREMENT _ L
 
+LZ 0 LZ 0 R
+LZ 1 INIT 1 R
+LZ _ END1 _ L
+END1 0 HALT 1 R
 
 INCREMENT 0 HALT 1 L
 INCREMENT 1 INCREMENT 0 L
