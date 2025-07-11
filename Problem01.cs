@@ -18,11 +18,17 @@ public class Problem01
     result.Result.Should().Be(expected);
   }
 
+  //   private string Program = @"
+// INIT | INIT | R
+// INIT + ADD | R
+// ADD | ADD | R
+// ADD _ BACKUP _ L
+// BACKUP | HALT _ R
+// ";
+
   private string Program = @"
-INIT | INIT | R
-INIT + ADD | R
-ADD | ADD | R
-ADD _ BACKUP _ L
-BACKUP | HALT _ R
+INIT | OK _ R
+OK | OK | R
+OK + HALT | R
 ";
 }
