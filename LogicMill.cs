@@ -37,9 +37,11 @@ class LogicMill(string stringRules)
     CurrentState = StartState;
     for (; steps < MaxSteps && CurrentState != HaltState; steps++)
     {
+      // Console.WriteLine($"{CurrentState}: {TapeToString(tape)}");
+
       if (!Rules[CurrentState].TryGetValue(tape[TapePosition], out var rule))
       {
-        var s = tape.WithIndices().Select(it => it.Index == TapePosition ? $"[{it.Value}]" : $"{it.Value}").Join();
+        var s = TapeToString(tape);
         throw new ApplicationException($"No state transtion for {CurrentState} -> {tape[TapePosition]}\nTape: {s}");
       }
       CurrentState = rule.NewState;
@@ -49,13 +51,20 @@ class LogicMill(string stringRules)
       if (TapePosition == -1) { tape = [Blank, .. tape]; TapePosition += 1; }
     }
     return (tape, steps);
+
+    string TapeToString(List<char> tape)
+    {
+      return tape.WithIndices().Select(it => it.Index == TapePosition ? $"[{it.Value}]" : $"{it.Value}").Join();
+    }
   }
 
   public record TransitionRule(string CurrentState, char CurrentSymbol, string NewState, char NewSymbol, int MoveDirection);
   public static List<TransitionRule> ParseTransitionRules(List<string> input)
   {
+    var comment = P.Format("//{}", P.Any.Star().Void()).Optional();
+    input = input.Where(it => !string.IsNullOrWhiteSpace(it) && comment.Parse(it).Count == 0).ToList();
     var identifier = P.Sequence(P.Letter, (P.Letter | P.Digit | P.Any.Where(it => it == '_')).Star().Join()).Select(it => it.First + it.Second);
-    return P.Format("{} {} {} {} {}", identifier, P.Any, identifier, P.Any, P.Choice("L", "R"))
+    return P.Format("{} {} {} {} {} {}", identifier, P.Any, identifier, P.Any, P.Choice("L", "R"), comment)
       .Select(it => new TransitionRule(it.First, it.Second, it.Third, it.Fourth, it.Fifth == "L" ? -1 : 1))
       .ParseMany(input);
   }
