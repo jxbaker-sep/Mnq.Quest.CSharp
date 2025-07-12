@@ -36,8 +36,12 @@ class LogicMill(string stringRules)
     TapePosition = temp[0];
     CurrentState = StartState;
     for (; steps < MaxSteps && CurrentState != HaltState; steps++)
-    {      
-      var rule = Rules[CurrentState][tape[TapePosition]];
+    {
+      if (!Rules[CurrentState].TryGetValue(tape[TapePosition], out var rule))
+      {
+        var s = tape.WithIndices().Select(it => it.Index == TapePosition ? $"[{it.Value}]" : $"{it.Value}").Join();
+        throw new ApplicationException($"No state transtion for {CurrentState} -> {tape[TapePosition]}\nTape: {s}");
+      }
       CurrentState = rule.NewState;
       tape[TapePosition] = rule.NewSymbol;
       TapePosition += rule.MoveDirection;
