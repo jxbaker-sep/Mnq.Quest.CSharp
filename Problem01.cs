@@ -25,7 +25,7 @@ public class Problem01: Program
   {
     var ok = CreateState();
     Init.On(Bar, r => r.Write(Blank).Then(ok));
-    ok.On(Bar, r => r.Skip());
+    ok.On(Bar, r => r.Right());
     ok.On('+', r => r.Write(Bar).Then(Halt));
     Write("Problem01.rules");
 

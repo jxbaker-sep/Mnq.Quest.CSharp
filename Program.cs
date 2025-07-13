@@ -23,6 +23,18 @@ public class Program
       foreach(var token in Lexicon) On(token, callback);
     }
 
+    public Rule Skip(char Token)
+    {
+      var rule = new Rule(this, Token, this, Token, Direction.Right);
+      Parent.Rules[(Name, Token)] = rule;
+      return rule;
+    }
+
+    public void Skip(string Lexicon)
+    {
+      foreach(var token in Lexicon) Skip(token);
+    }
+
     public override bool Equals(object? obj)
     {
       if (obj is State other) return this == other;
@@ -44,7 +56,7 @@ public class Program
       var d = Direction == Direction.Left ? 'L' : 'R';
       return $"{State.Name} {Token} {NextState.Name} {NextToken} {d}";
     }
-    public Rule Skip() => this; // for ease of legibility
+    public Rule Right() => this with { Direction = Direction.Right };
     public Rule Left() => this with { Direction = Direction.Left };
     public Rule Write(char Token) => this with { NextToken = Token };
     public Rule Write(string Tokens) 
