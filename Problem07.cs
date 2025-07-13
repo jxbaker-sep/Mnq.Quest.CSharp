@@ -6,7 +6,6 @@ namespace Mng.Quest.CSharp;
 public class Problem07
 {
   [Theory]
-  [InlineData("cahach", "caha[ch]")]
   [InlineData("wõta-wastu-mu-soow-ja-chillitse-toomemäel", "[w]õta-[w]astu-mu-soo[w]-ja-[ch]illitse-toomemäel")]
   public void Part1(string input, string expected)
   {
@@ -49,35 +48,43 @@ public class Problem07
       rule(state, token, "HALT", repl);
     }
 
-    foreach (var token in lexicon) skip("INIT", token);
     foreach (var token in lexicon.Concat([sentinel, '[', ']'])) skip(rewind, token, "L");
 
-    write("INIT", sentinel);
-    var scan = NextState();
+    var scan = "INIT";
     rule(rewind, blank, scan, blank);
     halt(scan, sentinel);
     
     foreach (var token in lexicon)
     {
-      var me = NextState();
-      rule(scan, token, me, blank);
-      foreach (var other in lexicon.Concat([sentinel, '[', ']']))
+      var meNoSentinel = NextState();
+      rule(scan, token, meNoSentinel, blank);
+      foreach (var other in lexicon.Concat(['[', ']']))
       {
         if (token == 'c' && other == 'h') {
+          var chNoSentinel = NextState();
+          rule(meNoSentinel, other, chNoSentinel, blank);
+          foreach (var other2 in lexicon.Concat(['[', ']'])) skip(chNoSentinel, other2);
           var ch = NextState();
-          rule(me, other, ch, blank);
-          foreach (var other2 in lexicon.Concat([sentinel, '[', ']'])) skip(ch, other2);
+          foreach (var other2 in lexicon.Concat(['[', ']'])) skip(ch, other2);
+          rule(chNoSentinel, sentinel, ch, sentinel);
           writes(ch, "[ch]");
+          writes(chNoSentinel, $"{sentinel}[ch]");
         }
-        else skip(me, other);
+        else skip(meNoSentinel, other);
       }
+      var me = NextState();
+      rule(meNoSentinel, sentinel, me, sentinel);
+      foreach (var other2 in lexicon.Concat(['[', ']'])) skip(me, other2);
+
       if (token == 'w')
       {
         writes(me, $"[w]");
+        writes(meNoSentinel, $"{sentinel}[w]");
       }
       else
       {
         write(me, token);
+        writes(meNoSentinel, $"{sentinel}{token}");
       }
     }
 
