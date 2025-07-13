@@ -1,7 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
 using Utils;
 
-class Program
+public class Program
 {
   private readonly Dictionary<(string, char), Rule> Rules = [];
 
@@ -74,10 +73,13 @@ class Program
   public Program()
   {
     Init = new State("INIT", this);
+    Halt = new State("HALT", this);
   }
 
   public State Init { get; private set; }
+  public State Halt { get; private set; }
   public const char Blank = '_';
+  public const char Bar = '|';
 
   public string Join()
   {

@@ -7,7 +7,7 @@ using P = Parser.ParserBuiltins;
 
 namespace Mng.Quest.CSharp;
 
-public class Problem01
+public class Problem01: Program
 {
   [Theory]
   [InlineData("|||+||||", "|||||||")]
@@ -18,13 +18,20 @@ public class Problem01
     result.Result.Should().Be(expected);
   }
 
-  //   private string Program = @"
-// INIT | INIT | R
-// INIT + ADD | R
-// ADD | ADD | R
-// ADD _ BACKUP _ L
-// BACKUP | HALT _ R
-// ";
+  [Theory]
+  [InlineData("|||+||||", "|||||||")]
+  [InlineData("|||||+||||||||", "|||||||||||||")]
+  public void Part2(string input, string expected)
+  {
+    var ok = CreateState();
+    Init.On(Bar, r => r.Write(Blank).Then(ok));
+    ok.On(Bar, r => r.Skip());
+    ok.On('+', r => r.Write(Bar).Then(Halt));
+    Write("Problem01.rules");
+
+    var result = new LogicMill(Join()).RunToHalt(input);
+    result.Result.Should().Be(expected);
+  }
 
   private string Program = @"
 INIT | OK _ R

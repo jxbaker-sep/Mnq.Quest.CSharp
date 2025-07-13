@@ -1,0 +1,3 @@
+INIT | S0 _ R
+S0 | S0 | R
+S0 + HALT | R
