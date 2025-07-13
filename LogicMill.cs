@@ -3,7 +3,7 @@ using Parser;
 using Utils;
 using P = Parser.ParserBuiltins;
 
-class LogicMill(string stringRules)
+class LogicMill
 {
   public const int MaxSteps = 1_000_000;
 
@@ -14,10 +14,17 @@ class LogicMill(string stringRules)
   public const string StartState = "INIT";
   public const string HaltState = "HALT";
 
+  public LogicMill(string stringRules)
+  {
+    if (stringRules.Length > 710_000) throw new ApplicationException($"Too many rules! Max length 710_000, found {stringRules.Length}");
 
-  private readonly Dictionary<string, Dictionary<char, TransitionRule>> Rules = ParseTransitionRules([.. stringRules.Split("\n", StringSplitOptions.RemoveEmptyEntries)])
-    .GroupToDictionary(it => it.CurrentState, it => it)
-    .ToDictionary(it => it.Key, it => it.Value.ToDictionary(it => it.CurrentSymbol, it => it));
+    Rules = ParseTransitionRules([.. stringRules.Split("\n", StringSplitOptions.RemoveEmptyEntries)])
+      .ToDictionary(it => (it.CurrentState, it.CurrentSymbol), it => it);
+
+    if (Rules.Keys.Count > 1024) throw new ApplicationException($"Too many states! Max 1024, found {Rules.Keys.Count}");
+  }
+
+  private readonly Dictionary<(string, char),TransitionRule> Rules;
 
   public (string Result, int Steps) RunToHalt(string tapeAsString)
   {
@@ -38,23 +45,27 @@ class LogicMill(string stringRules)
     for (; steps < MaxSteps && CurrentState != HaltState; steps++)
     {
       // Console.WriteLine($"{CurrentState}: {TapeToString(tape)}");
-
-      if (!Rules[CurrentState].TryGetValue(tape[TapePosition], out var rule))
-      {
-        var s = TapeToString(tape);
-        throw new ApplicationException($"No state transtion for {CurrentState} -> {tape[TapePosition]}\nTape: {s}");
-      }
+      var rule = Rules[(CurrentState, tape[TapePosition])];
       CurrentState = rule.NewState;
       tape[TapePosition] = rule.NewSymbol;
       TapePosition += rule.MoveDirection;
-      if (TapePosition >= tape.Count) tape.Add(Blank);
-      if (TapePosition == -1) { tape = [Blank, .. tape]; TapePosition += 1; }
+      if (TapePosition >= tape.Count)
+      {
+        tape.Add(Blank);
+        if (tape.Count > 1_048_576) throw new ApplicationException("Too many cells on tape.");
+      };
+      if (TapePosition == -1)
+      {
+        tape = [Blank, .. tape];
+        TapePosition += 1;
+        if (tape.Count > 1_048_576) throw new ApplicationException("Too many cells on tape.");
+      }
     }
     return (tape, steps);
 
-    string TapeToString(List<char> tape)
+    static string TapeToString(LogicMill @this, List<char> tape)
     {
-      return tape.WithIndices().Select(it => it.Index == TapePosition ? $"[{it.Value}]" : $"{it.Value}").Join();
+      return tape.WithIndices().Select(it => it.Index == @this.TapePosition ? $"{it.Value}←" : $"{it.Value}").Join();
     }
   }
 
