@@ -21,7 +21,8 @@ class LogicMill
     Rules = ParseTransitionRules([.. stringRules.Split("\n", StringSplitOptions.RemoveEmptyEntries)])
       .ToDictionary(it => (it.CurrentState, it.CurrentSymbol), it => it);
 
-    if (Rules.Keys.Count > 1024) throw new ApplicationException($"Too many states! Max 1024, found {Rules.Keys.Count}");
+    var states = Rules.Select(it => it.Value.CurrentState).Distinct().ToList();
+    if (states.Count > 1024) throw new ApplicationException($"Too many states! Max 1024, found {states.Count}");
   }
 
   private readonly Dictionary<(string, char),TransitionRule> Rules;
@@ -30,8 +31,8 @@ class LogicMill
   {
     var input = tapeAsString.ToList();
     var (result, steps) = RunToHaltOnCharList(input);
-    while (result[0] == Blank) result = result[1..];
-    while (result[^1] == Blank) result = result[..^1];
+    while (result.Count > 0 && result[0] == Blank) result = result[1..];
+    while (result.Count > 0 && result[^1] == Blank) result = result[..^1];
     return (result.Join(), steps);
   }
 
