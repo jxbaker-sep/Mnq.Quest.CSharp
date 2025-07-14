@@ -11,12 +11,23 @@ public class Problem03 : Program
   [InlineData("111", "1000")]
   public void Part1(string input, string expected)
   {
-    Init.Skip("10");
-    Init.On(Blank, r => r.Left().Then(s => s
-      .On("0", r => r.Write("1").Then(Halt))
+    var was0 = CreateState();
+    var was1 = CreateState();
+    Init.On('1', r => r.Write(Blank).Then(was0));
+    Init.On('0', r => r.Write(Blank).Then(was1));
+
+    was0.On('1', r => r.Write('0').Then(was1));
+    was0.On('0', r => r.Write('0').Then(was0));
+    was0.On('_', r => r.Write('0').Then(Halt));
+
+    var finalize = CreateState()
       .On("1", r => r.Write("0").Left())
-      .On(Blank, r => r.Write("1").Then(Halt)))
-    );
+      .On("0", r => r.Write("1").Then(Halt));
+
+    was1.On('1', r => r.Write('1').Then(was1));
+    was1.On('0', r => r.Write('1').Then(was0));
+    was1.On('_', r => r.Write('0').Then(finalize).Left());
+
 
     var result = new LogicMill(Join()).RunToHalt(input);
 
