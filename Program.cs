@@ -85,16 +85,9 @@ public class Program
   public State CreateState(string name = "")
   {
     var s = name;
-    if (s == "") {
-      var id = NextStateId++;
-      var first = id % 30;
-      var l = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).Concat("äöõü").ToList();
-      s += l[first];
-      while (id >= 30) {
-        id /= 30;
-        first = (id-1) % 30;
-        s += l[first];
-      }
+    if (s == "")
+    {
+      s = IdToStateLabel(NextStateId++);
     }
     else {
       if (s.Any(it => it == ' ')) throw new ApplicationException($"State Label cannot contain spaces: {s}");
@@ -102,6 +95,19 @@ public class Program
     return new State(s, this);
   }
 
+  private static string IdToStateLabel(int id)
+  {
+    var first = id % 30;
+    var l = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).Concat("äöõü").ToList();
+    string s = "" + l[first];
+    while (id >= 30)
+    {
+      id /= 30;
+      first = (id - 1) % 30;
+      s += l[first];
+    }
+    return s;
+  }
 
   public Program()
   {
@@ -114,13 +120,35 @@ public class Program
   public const char Blank = '_';
   public const char Bar = '|';
 
-  public string Join()
+  public string Join(bool compact = false)
   {
-    return Rules.Values.Select(it => it.ToString()).Join("\n");
+    var rules = Rules.Values.ToList();
+    if (compact)
+    {
+      var id = 0;
+      var oldRules = rules;
+      rules = [];
+      Dictionary<String, State> map = [];
+      map["INIT"] = Init;
+      map["HALT"] = Halt;
+      foreach(var rule in oldRules)
+      {
+        if (!map.TryGetValue(rule.State.Name, out var s1))
+        {
+          map[rule.State.Name] = new State(IdToStateLabel(id++), this);
+        }
+        if (!map.TryGetValue(rule.NextState.Name, out var s2))
+        {
+          map[rule.NextState.Name] = new State(IdToStateLabel(id++), this);
+        }
+        rules.Add(rule with { State = map[rule.State.Name], NextState = map[rule.NextState.Name] });
+      }
+    }
+    return rules.Select(it => it.ToString()).Join("\n");
   }
 
-  public void Write(string filename)
+  public void Write(string filename, bool compact = true)
   {
-    File.WriteAllText($"/home/jxbaker@net.sep.com/dev/Mnq.Quest.CSharp/{filename}", Join());
+    File.WriteAllText($"/home/jxbaker@net.sep.com/dev/Mnq.Quest.CSharp/{filename}", Join(compact));
   }
 }
