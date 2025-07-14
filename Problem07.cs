@@ -37,7 +37,7 @@ public class Problem07 : Program
         lookingForH.On(lexicon, r => r.Then(beforeSentinel)); // go back to regular 'c'
         
         var beforeSentinelCh = CreateState();
-        lookingForH.On('h', r => r.Write(Blank).Then(beforeSentinelCh), replace: true);
+        lookingForH.On('h', r => r.Write(Blank).Then(beforeSentinelCh));
 
         beforeSentinelCh.Skip(lexicon);
         var afterSentinelCh = CreateState();
