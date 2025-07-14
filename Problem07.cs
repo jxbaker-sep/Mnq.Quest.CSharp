@@ -36,17 +36,16 @@ public class Problem07 : Program
         Init.On('c', r => r.Write(Blank).Then(lookingForH), replace: true);
         lookingForH.On(lexicon, r => r.Then(beforeSentinel)); // go back to regular 'c'
         
-        var beforeSentinelCh = CreateState();
-        lookingForH.On('h', r => r.Write(Blank).Then(beforeSentinelCh));
+        var foundHBeforeSentinel = CreateState();
+        lookingForH.On('h', r => r.Write(Blank).Then(foundHBeforeSentinel), replace: true);
 
-        beforeSentinelCh.Skip(lexicon);
-        var afterSentinelCh = CreateState();
-        beforeSentinelCh.On(sentinel, r => r.Then(afterSentinelCh));
-        afterSentinelCh.Skip(rhsLexicon);
-        beforeSentinelCh.On(Blank, r => r.Write($"{sentinel}[ch]", after => after.Then(rewind).Left()));
-        afterSentinelCh.On(Blank, r => r.Write($"[ch]", after => after.Then(rewind).Left()));
+        foundHBeforeSentinel.Skip(lexicon);
+        var foundHAfterSentinel = CreateState();
+        foundHBeforeSentinel.On(sentinel, r => r.Then(foundHAfterSentinel));
+        foundHAfterSentinel.Skip(rhsLexicon);
+        foundHBeforeSentinel.On(Blank, r => r.Write($"{sentinel}[ch]", after => after.Then(rewind).Left()));
+        foundHAfterSentinel.On(Blank, r => r.Write($"[ch]", after => after.Then(rewind).Left()));
       }
-      // TODO: erase h while token == c
       var afterSentinel = CreateState($"after_token_{use}");
       beforeSentinel.On(sentinel, r => r.Then(afterSentinel));
       afterSentinel.Skip(rhsLexicon);

@@ -14,7 +14,7 @@ public class Program
     public State On(char Token, Func<Rule, Rule> callback, bool replace = false)
     {
       if (!replace && Parent.Rules.ContainsKey((Name, Token))) {
-        throw new ApplicationException($"Already added rule {(Name, Token)}");
+        throw new ApplicationException($"Duplicate rule {(Name, Token)}");
       }
       var rule = callback(new Rule(this, Token, this, Token, Direction.Right));
       Parent.Rules[(Name, Token)] = rule;
