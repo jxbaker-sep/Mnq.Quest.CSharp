@@ -20,16 +20,18 @@ public class Problem04 : Program
     for (var i = 1; i < n * n; i++)
     {
       numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write('|').Then(i == 1 ? Halt : numbers[i-1])));
-      backErase.Add(CreateState($"backErase{i}")).On("|", r => r.Write(' ')).)
     }
 
+    for (var i = 1; i < n; i++) {
+      backErase.Add(CreateState($"backErase{i}").On("|", r => r.Write(Blank).Left().Then(i == 1 ? Halt : backErase[i - 1])));
+    }
+    
     var previousLhs = Init;
 
     for (var i = 1; i <= n; i++) {
       var lhs = CreateState($"lhs{i}");
       previousLhs.On("|", r => r.Then(lhs));
       lhs.On("*", r => {
-        if (i == 1) return r.Write(Blank).Then(Halt);
         var rhsZero = CreateState($"rhs_{i}_0");
         var previousRhs = rhsZero;
         for (var j = 1; j <= n; j++)
@@ -39,7 +41,7 @@ public class Problem04 : Program
           rhs.On(Blank, r => {
             var goal = i * j;
             var written = i + j + 1; // +1 because we turned the * into a |
-            if (written > goal) return r.Write(Blank).Then(Halt);
+            if (written > goal) return r.Left().Then(backErase[written - goal]);
             if (goal <= written) return r.Then(Halt);
             if (goal == written + 1) return r.Write('|').Then(Halt);
             return r.Write("|").Then(numbers[goal - written - 1]);

@@ -59,7 +59,10 @@ public class Program
     }
     public Rule Right() => this with { Direction = Direction.Right };
     public Rule Left() => this with { Direction = Direction.Left };
-    public Rule Write(char Token) => this with { NextToken = Token };
+    public Rule Write(char Token) { 
+      if (Token == ' ') throw new ApplicationException("Cannot write token <space>.");
+      return this with { NextToken = Token };
+    }
     public Rule Write(string Tokens) 
     {
       var rule = Write(Tokens[0]);
