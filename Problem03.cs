@@ -21,9 +21,9 @@ public class Problem03 : Program
     was0.On('_', r => r.Write('1').Then(Halt));
 
     var finalize = CreateState()
-      .On("1", r => r.Write("0").Left())
-      .On("0", r => r.Write("1").Then(Halt))
-      .On("_", r => r.Write("1").Then(Halt));
+      .On("1", r => r.Write('0').Left())
+      .On("0", r => r.Write('1').Then(Halt))
+      .On("_", r => r.Write('1').Then(Halt));
 
     was1.On('1', r => r.Write('1').Then(was1));
     was1.On('0', r => r.Write('1').Then(was0));

@@ -44,7 +44,7 @@ public class Problem04 : Program
             if (written > goal) return r.Left().Then(backErase[written - goal]);
             if (goal <= written) return r.Then(Halt);
             if (goal == written + 1) return r.Write('|').Then(Halt);
-            return r.Write("|").Then(numbers[goal - written - 1]);
+            return r.Write('|').Then(numbers[goal - written - 1]);
           });
           
           previousRhs = rhs;

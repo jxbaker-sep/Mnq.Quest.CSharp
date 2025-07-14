@@ -11,10 +11,13 @@ public class Program
     public static bool operator ==(State lhs, State rhs) => lhs.Name == rhs.Name;
     public static bool operator !=(State lhs, State rhs) => !(lhs == rhs);
 
-    public State On(char Token, Func<Rule, Rule> callback)
+    public State On(char Token, Func<Rule, Rule> callback, bool replace = false)
     {
-      var rule = new Rule(this, Token, this, Token, Direction.Right);
-      Parent.Rules[(Name, Token)] = callback(rule);
+      if (!replace && Parent.Rules.ContainsKey((Name, Token))) {
+        throw new ApplicationException($"Already added rule {(Name, Token)}");
+      }
+      var rule = callback(new Rule(this, Token, this, Token, Direction.Right));
+      Parent.Rules[(Name, Token)] = rule;
       return this;
     }
 
@@ -63,17 +66,15 @@ public class Program
       if (Token == ' ') throw new ApplicationException("Cannot write token <space>.");
       return this with { NextToken = Token };
     }
-    public Rule Write(string Tokens) 
+    public Rule Write(string Tokens, Func<Rule, Rule> applyToLast) 
     {
-      var rule = Write(Tokens[0]);
-      var state = State;
-      foreach(var next in Tokens[1..])
-      {
-        state = state.Parent.CreateState();
-        rule.Then(state);
-        state.On(Token, r => rule = r.Write(next));
+      List<State> states = [State, .. Tokens.Select(it => State.Parent.CreateState())];
+      var writes = Tokens.WithIndices().Select(it => new Rule(states[it.Index], Token, states[it.Index + 1], it.Value, Direction.Right)).ToList();
+      writes[^1] = applyToLast(writes[^1]);
+      foreach(var write in writes.Skip(1)) {
+        State.Parent.Rules[(write.State.Name, Token)] = write;
       }
-      return rule;
+      return writes[0];
     }
     public Rule Then(State NextState) => this with { NextState = NextState };
     public Rule Then(Action<State> callback) {

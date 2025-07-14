@@ -9,7 +9,7 @@ class LogicMill
 
   public string CurrentState { get; private set; } = StartState;
   public int TapePosition { get; private set; } = 0;
-  public bool Debug { get; private set; }
+  public bool Debug { get; private set; } = false;
 
   public const char Blank = '_';
   public const string StartState = "INIT";
