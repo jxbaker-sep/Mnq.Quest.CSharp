@@ -1,6 +1,11 @@
-INIT 1 INIT 1 R
-INIT 0 INIT 0 R
-a 0 HALT 1 R
-a 1 a 0 L
+INIT 1 b _ R
+INIT 0 a _ R
+a 1 b 0 R
+a 0 a 0 R
 a _ HALT 1 R
-INIT _ a _ L
+c 1 c 0 L
+c 0 HALT 1 R
+c _ HALT 1 R
+b 1 b 1 R
+b 0 a 1 R
+b _ c 0 L
