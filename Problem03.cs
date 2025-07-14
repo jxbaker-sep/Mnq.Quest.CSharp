@@ -2,7 +2,7 @@ using FluentAssertions;
 
 namespace Mng.Quest.CSharp;
 
-public class Problem03
+public class Problem03 : Program
 {
   [Theory]
   [InlineData("0", "1")]
@@ -11,17 +11,16 @@ public class Problem03
   [InlineData("111", "1000")]
   public void Part1(string input, string expected)
   {
-    var result = new LogicMill(Program).RunToHalt(input);
+    Init.Skip("10");
+    Init.On(Blank, r => r.Left().Then(s => s
+      .On("0", r => r.Write("1").Then(Halt))
+      .On("1", r => r.Write("0").Left())
+      .On(Blank, r => r.Write("1").Then(Halt)))
+    );
+
+    var result = new LogicMill(Join()).RunToHalt(input);
+
+    Write("Problem03.rules");
     result.Result.Should().Be(expected);
   }
-
-  private string Program = @"
-INIT 0 INIT 0 R
-INIT 1 INIT 1 R
-INIT _ INCREMENT _ L
-
-INCREMENT 0 HALT 1 L
-INCREMENT 1 INCREMENT 0 L
-INCREMENT _ HALT 1 L
-";
 }
