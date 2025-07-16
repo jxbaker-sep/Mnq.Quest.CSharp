@@ -1,3 +1,0 @@
-INIT | a _ R
-a | a | R
-a + HALT | R

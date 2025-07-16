@@ -1,5 +1,0 @@
-INIT | a _ R
-a | b _ R
-a _ HALT O R
-b | a _ R
-b _ HALT E R
