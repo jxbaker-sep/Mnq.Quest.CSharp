@@ -101,14 +101,16 @@ public class Program
 
   private static string IdToStateLabel(int id)
   {
-    var first = id % 30;
-    var l = Enumerable.Range('a', 'z' - 'a' + 1).Select(c => (char)c).Concat("äöõü").ToList();
-    string s = "" + l[first];
-    while (id >= 30)
+    var firsts = "abcdefghijklmnopqrstuvwxyzABäöõü".ToList();
+    var latters = "abcdefghijklmnopqrstuvwxyzABäöõü0123456789".ToList();
+    var first = id % firsts.Count;
+    string s = "" + firsts[first];
+    id /= firsts.Count;
+    while (id > 0)
     {
-      id /= 30;
-      first = (id - 1) % 30;
-      s += l[first];
+      first = (id - 1) % latters.Count;
+      s += latters[first];
+      id /= latters.Count;
     }
     return s;
   }
