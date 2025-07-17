@@ -29,7 +29,7 @@ public class Problem08: Program
     Init.Skip(erased);
     Init.On(Blank, r => r.Then(finalize).Left());
     Init.On(lexicon, r => {
-      char token = r.Token;
+      char token = r.CurrentToken;
       var copyBackNoSentinel = CreateState();
       copyBackNoSentinel.On(lexicon + erased, r => r.Left());
       var copyBack = CreateState();
