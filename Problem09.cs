@@ -35,8 +35,6 @@ public class Problem09: Program
       previousUp = goingUp;
     }
 
-
-
     Write("Problem09.rules");
 
     var result = new LogicMill(Join()).RunToHalt(input);
