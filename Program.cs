@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Utils;
 
 namespace Mng.Quest.CSharp;
@@ -160,66 +161,52 @@ public class Program
   public const char Blank = '_';
   public const char Bar = '|';
 
-  public void Optimize()
+  public static List<Rule> OptimizedRules(IReadOnlyList<State> states)
   {
-    // Remove States with no rules
-    States.RemoveAll(state => state.Rules.Count == 0);
-    Console.WriteLine("Entering optimize");
+    var init = states.Where(it => it.Label == "INIT").First();
+    var current = states.SelectMany(it => it.Rules).ToList();
+
     // Remove unreferenced states
-    var tailStatesCount = States.SelectMany(state => state.Rules).Where(rule => rule.CurrentState != rule.NextState).Select(it => it.NextState).GroupToCounts();
-    foreach(var state in States) if (!tailStatesCount.ContainsKey(state)) tailStatesCount[state] = 0;
     while (true)
     {
-      var zeroes = tailStatesCount.Where(it => it.Value == 0 && it.Key != Init).Select(it => it.Key).ToList();
-      Console.WriteLine($"Removed {zeroes.Count} rules:");
-      if (zeroes.Count == 0) break;
-      foreach (var k in zeroes) {
-        tailStatesCount.Remove(k);
-        foreach(var r in k.Rules.Where(rule => rule.CurrentState != rule.NextState)) tailStatesCount[r.NextState] -= 1;
-        States.Remove(k);
-      }
+      var heads = current.Select(rule => rule.CurrentState).ToHashSet();
+      var tails = current.Where(rule => rule.CurrentState != rule.NextState).Select(it => it.NextState).ToHashSet();
+      var keep = heads.Intersect(tails).Append(init).ToHashSet();
+      if (current.RemoveAll(it => !keep.Contains(it.CurrentState)) == 0) break;
     }
 
 
-    // Combine similar states
-    // states are the same if they have all the same rules
-    // original = [.. Rules.Values];
-    // List<Rule> current = [.. Rules.Values];
+    // // Combine similar states
+    // // states are the same if they have all the same rules
+    // // original = [.. Rules.Values];
 
     // static string CreateKey(List<Rule> rules) => rules.OrderBy(it => it.CurrentToken).Select(it => $"{it.CurrentToken} {it.NextState.Label} {it.NextToken} {it.Direction}").Join(",");
     // while (true) {
-    //   var stateToRules = current.GroupToDictionary(it => it.CurrentState, it => it);
-    //   var byKey = stateToRules.GroupToDictionary(it => CreateKey(it.Value), it => it.Key);
-    //   foreach(var k in byKey.Keys.ToList()) byKey[k] = byKey[k].Distinct().ToList();
-    //   var sameStatesMaybe = byKey.Values.Where(it => it.Count > 1).Take(1).FirstOrDefault();
-    //   if (sameStatesMaybe is {} sameStates) {
-    //     var me = sameStates[0];
-    //     var remainder = sameStates[1..];
-    //     // make sure kept rule is "Init"
-    //     if (sameStates.Any(it => it == Init))
-    //     {
-    //       me = Init;
-    //       remainder = sameStates.Where(it => it != Init).ToList();
-    //     }
-    //     Console.WriteLine($"Combining states {me.Label} and {remainder.Select(it => it.Label).Join(", ")}");
-    //     current = current.Where(rule => !remainder.Contains(rule.CurrentState)).ToList();
-    //     current = current.Select(rule => rule with { NextState = remainder.Contains(rule.NextState) ? me : rule.NextState }).ToList();
-    //     continue;
+    //   Console.WriteLine(current.Count);
+    //   var groupedByKey = current.Select(it => it.CurrentState).Distinct().GroupToDictionary(it => CreateKey(it.Rules));
+    //   var item = groupedByKey.Where(it => it.Value.Count > 1).Take(1).ToList();
+    //   if (item.Count == 0) break;
+    //   var group = item[0].Value;
+    //   var me = group[0];
+    //   var remainder = group[1..];
+    //   if (group.Contains(Init))
+    //   {
+    //     me = Init;
+    //     remainder = group.Where(it => it != Init).ToList();
     //   }
-    //   break;
+    //   current = current.Where(it => !remainder.Contains(it.CurrentState)).ToList();
+    //   current = current.Select(it => {
+    //     if (remainder.Contains(it.NextState)) return it with { NextState = me };
+    //     return it;
+    //   }).ToList();
     // }
 
-    // Rules.Clear();
-    // foreach (var rule in current)
-    // {
-    //   Rules[rule.Key] = rule;
-    // }
+    return current;
   }
 
   public string Join(bool compact = false)
   {
-    Optimize();
-    var rules = States.SelectMany(rules => rules.Rules).ToList();
+    var rules = OptimizedRules(States);
     if (compact)
     {
       var id = 0;
