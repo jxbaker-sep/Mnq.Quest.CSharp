@@ -31,8 +31,8 @@ public class Problem04Program : Program
     List<State> backErase = [CreateState()];
     for (var i = 1; i < n * n; i++)
     {
-      numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write('|').Then(i == 1 ? Halt : numbers[i-1])));
-      // numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Then(Halt))));
+      // numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write('|').Then(i == 1 ? Halt : numbers[i-1])));
+      numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Then(Halt))));
     }
 
     for (var i = 1; i < n; i++)
