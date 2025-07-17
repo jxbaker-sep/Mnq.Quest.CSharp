@@ -6,7 +6,7 @@ namespace Mng.Quest.CSharp;
 
 public class Problem04
 {
-  public static readonly Problem04Program MyProgram = new();
+  public static Problem04Program? MyProgram = null;
 
   [Theory]
   [InlineData("||*|||", "||||||")]
@@ -17,6 +17,7 @@ public class Problem04
   // [InlineData("|||||*||||||", "||||||||||||||||||||||||||||||")]
   public void Part1(string input, string expected)
   {
+    MyProgram ??= new();
     var result = new LogicMill(MyProgram.Join()).RunToHalt(input);
     result.Result.Should().Be(expected);
   }
@@ -31,8 +32,8 @@ public class Problem04Program : Program
     List<State> backErase = [CreateState()];
     for (var i = 1; i < n * n; i++)
     {
-      // numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write('|').Then(i == 1 ? Halt : numbers[i-1])));
-      numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Then(Halt))));
+      numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write('|').Then(i == 1 ? Halt : numbers[i-1])));
+      // numbers.Add(CreateState($"number{i}").On(Blank, r => r.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Then(Halt))));
     }
 
     for (var i = 1; i < n; i++)
