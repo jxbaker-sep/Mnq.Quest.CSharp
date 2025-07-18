@@ -233,12 +233,12 @@ public class Program
       var first = keyToStates.Where(it => it.Value.Count > 1).Take(1).Select(it => it.Value).ToList();
       if (first.Count == 0) break;
       var group = first[0];
-      var me = group.Contains(init) ? init : group.First();
-      var remainder = group.Except([me]).ToList();
-      var key = CreateKey(me);
-      foreach(var state in remainder)
+      var keptState = group.Contains(init) ? init : group.First();
+      var removedStates = group.Except([keptState]).ToList();
+      var key = CreateKey(keptState);
+      foreach(var removedState in removedStates)
       {
-        foreach(var rn in (references.GetValueOrDefault(state) ?? []).ToList())
+        foreach(var rn in (references.GetValueOrDefault(removedState) ?? []).ToList())
         {
           var rule = rules[rn];
           var parent = rule.CurrentState;
@@ -246,7 +246,7 @@ public class Program
           var oldKey = CreateKey(parent);
           keyToStates[oldKey].Remove(parent);
 
-          rules[rn].NextState = me;
+          rules[rn].NextState = keptState;
           var newKey = CreateKey(parent);
           if (keyToStates.TryGetValue(newKey, out HashSet<string>? value)) {
             value.Add(parent);
@@ -254,16 +254,32 @@ public class Program
             keyToStates[newKey] = [parent];
           }
 
-          // references should not contain rules where Current == Next
+          // references should not contain rules where Current == Next,
+          // so we don't need to add rn to references[keptState]
         }
-        keyToStates[key].Remove(state);
-        references.Remove(state);
-        states.Remove(state);
+        keyToStates[key].Remove(removedState);
+        references.Remove(removedState);
+        states.Remove(removedState);
       }
-    }    
+    }
 
-    var endRules = states.Values.Sum(it => it.Count);
-    Console.WriteLine($"Optimized away {startRules - endRules} rules. Returning {endRules}");
+    // Optimize like follows:
+    // If for State2, all rules like:
+    //    State2 Token3 HALT Token3 Any
+    // THEN 
+    //    optimize references to State2 into HALTs
+    //    State1 Token1 HALT Token2 Any
+
+    // foreach(var state in states)
+    // {
+    //   if (state.Value.Select(rn => rules[rn]).All(rule => rule.NextState == "HALT" && rule.CurrentToken == rule.NextToken))
+    //   {
+    //     Console.WriteLine("******* FOUND ************ ");
+    //   }
+    // }
+
+    // var endRules = states.Values.Sum(it => it.Count);
+    // Console.WriteLine($"Optimized away {startRules - endRules} rules. Returning {endRules}");
 
     return states.Values.SelectMany(it => it).Select(it => rules[it]).ToList();
   }
