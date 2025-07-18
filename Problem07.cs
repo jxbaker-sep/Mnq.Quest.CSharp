@@ -28,16 +28,16 @@ public class Problem07 : Program
 
       beforeSentinel.Skip(lexicon);
       if (token == 'c') {
-        var lookingForH = CreateState();
+        var lookingForH = CreateState($"looking_for_h");
 
         Init.On('c', r => r.Write(Blank).Then(lookingForH), replace: true);
         lookingForH.On(lexicon, r => r.Then(beforeSentinel)); // go back to regular 'c'
         
-        var foundHBeforeSentinel = CreateState();
+        var foundHBeforeSentinel = CreateState($"foundHBeforeSentinel");
         lookingForH.On('h', r => r.Write(Blank).Then(foundHBeforeSentinel), replace: true);
 
         foundHBeforeSentinel.Skip(lexicon);
-        var foundHAfterSentinel = CreateState();
+        var foundHAfterSentinel = CreateState("foundHAfterSentinel");
         foundHBeforeSentinel.On(sentinel, r => r.Then(foundHAfterSentinel));
         foundHAfterSentinel.Skip(rhsLexicon);
         foundHBeforeSentinel.On(Blank, r => r.Write($"{sentinel}[ch]", after => after.Then(rewind).Left()));
@@ -53,9 +53,9 @@ public class Problem07 : Program
       beforeSentinel.On(Blank, r => r.Write($"{sentinel}{s}", after => after.Left().Then(rewind)));
     }
 
-    Write("Problem07.rules");
+    Write("Problem07.rules", false);
 
-    var result = new LogicMill(Join()).RunToHalt(input);
+    var result = new LogicMill(Join(false)).RunToHalt(input);
     result.Result.Should().Be(expected);
   }
 }

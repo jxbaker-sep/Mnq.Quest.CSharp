@@ -44,7 +44,7 @@ public class Program
     public Rule Skip(char token)
     {
       var rule = new Rule(this, token, this, token, Direction.Right);
-      Rules[token] = rule;
+      Rules.Add(rule);
       return rule;
     }
 
@@ -99,12 +99,10 @@ public class Program
 
     public Rule Write(string tokens, Func<Rule, Rule> applyToLast)
     {
-      Console.WriteLine($"Write {tokens.Length}");
-
       if (tokens.Length == 0) throw new ApplicationException("Can't write 0-length string!");
       if (tokens.Length > 1)
       {
-        var next = CurrentState.Parent.CreateState();
+        var next = CurrentState.Parent.CreateState($"Write_{IdToLabel(CurrentState.Parent.NextStateId++)}");
         var result = Write(tokens[0]).Then(next);
         WriteRecursive(next, tokens, 1, applyToLast);
         return result;
@@ -124,7 +122,7 @@ public class Program
   }
 
   int NextStateId = 0;
-  private List<Rule> Optimized = [];
+  private List<PseudoRule> Optimized = [];
 
   public State CreateState(string name = "")
   {
@@ -170,106 +168,141 @@ public class Program
   public const char Blank = '_';
   public const char Bar = '|';
 
-  public static List<Rule> OptimizedRules(IReadOnlyList<State> instates)
-  {
-    var init = instates.Where(it => it.Label == "INIT").First();
-    var halt = instates.Where(it => it.Label == "HALT").First();
-    var current = instates.SelectMany(it => it.Rules).ToList();
+  public List<PseudoRule> Optimize() => OptimizedRules(States);
 
-    // Remove unreferenced states
-    var heads = current.Select(rule => rule.CurrentState).ToHashSet();
-    while (true)
+  public class PseudoRule(string CurrentState, char CurrentToken, string NextState, char NextToken, Direction Direction)
+  {
+    public string CurrentState { get; } = CurrentState;
+    public char CurrentToken { get; } = CurrentToken;
+    public string NextState { get; set; } = NextState;
+    public char NextToken { get; } = NextToken;
+    public Direction Direction { get; } = Direction;
+  }
+
+  public static List<PseudoRule> OptimizedRules(IReadOnlyList<State> instates)
+  {
+    var startRules = instates.Sum(it => it.Rules.Count);
+
+    List<PseudoRule> rules = [];
+    Dictionary<string, List<int>> states = [];
+    foreach(var instate in instates.Where(state => state.Rules.Count > 0))
     {
-      Console.WriteLine("Unreferenced " + heads.Count);
-      var tails = current.Where(rule => heads.Contains(rule.CurrentState) && rule.CurrentState != rule.NextState).Select(it => it.NextState).ToHashSet();
-      var next = heads.Intersect(tails).Append(init).ToHashSet();
-      if (next.Count == heads.Count) break;
-      heads = next;
+      List<int> myRules = [];
+      foreach(var rule in instate.Rules)
+      {
+        rules.Add(new PseudoRule(rule.CurrentState.Label, rule.CurrentToken, rule.NextState.Label, rule.NextToken, rule.Direction));
+        myRules.Add(rules.Count - 1);
+      }
+      states[instate.Label] = myRules;
     }
 
-    current = current.Where(it => heads.Contains(it.CurrentState)).ToList();
+    var init = "INIT";
 
-    // // Combine similar states
-    // // states are the same if they have all the same rules
-    // // original = [.. Rules.Values];
+    // Remove unreferenced states
+    Dictionary<string, List<int>> references = states.Values.SelectMany(it => it).Select(id => (rule: rules[id], id)).Where(it => it.rule.CurrentState != it.rule.NextState)
+      .GroupToDictionary(it => it.rule.NextState, it => it.id);
 
-    // Dictionary<State, State> parentToSuper = current.Select(it => it.CurrentState).Distinct().ToDictionary(it => it, it => it);
-    // parentToSuper[halt] = halt;
+    if (references.TryGetValue(init, out var initFound)) initFound.Add(-1);
+    else references[init] = [-1];
 
-    // State FindSuper(State s)
-    // {
-    //   if (parentToSuper[s] == s) return s;
-    //   var next = FindSuper(parentToSuper[s]);
-    //   parentToSuper[s] = next;
-    //   return next;
-    // }
-
-    // maps head states to non-reflexive rules that reference it
-    var rules = current.ToList();
-    var states = current.GroupToDictionary(it => it.CurrentState);
-    var reverseStates = current.Where(it => it.CurrentState != it.NextState).GroupToDictionary(it => it.NextState);
-
-    string CreateKey(IEnumerable<Rule> rules) => rules.OrderBy(it => it.CurrentToken).Select(it => $"{it.CurrentToken} {it.NextState.Label} {it.NextToken} {it.Direction}").Join(",");
-    var done = false;
-    while (!done)
+    while (true)
     {
-      Console.WriteLine("Combine " + reverseStates.Count);
-      var groupedByKey = states.GroupToDictionary(it => CreateKey(it.Value), it => it.Key);
-      done = true;
-      foreach (var group in groupedByKey.Where(it => it.Value.Count > 1))
-      {
-        done = false;
-        var me = group.Value[0];
-        var remainder = group.Value[1..];
-        if (group.Value.Contains(init))
-        {
-          me = init;
-          remainder = group.Value.Where(it => it != init).ToList();
+      // Console.WriteLine("Unreferenced " + states.Count);
+      var removed = states.Keys.Where(state => !references.TryGetValue(state, out var found) || found.Count == 0).ToList();
+      if (removed.Count == 0) break;
+      foreach(var state in removed) {
+        foreach(var rn in states[state]) {
+          if (references.TryGetValue(rules[rn].NextState, out var needle)) needle.Remove(rn);
         }
-        foreach (var item in remainder) {
-          states.Remove(item);
-          reverseStates[me].AddRange(reverseStates[item].Select(it => it with { NextState = me }));
-          reverseStates.Remove(item);
-        }
+        states.Remove(state);
       }
     }
 
-    current = reverseStates.SelectMany(it => it.Value).ToList();
-    Console.WriteLine("Returning " + current.Count);
+    // Combine similar states
+    // states are the same if they have all the same rules
+    string CreateKey(string s) => states[s].Select(rn => rules[rn])
+      .OrderBy(it => it.CurrentToken)
+      .Select(r => $"{r.CurrentToken} {r.NextState} {r.NextToken} {r.Direction}")
+      .Join(", ");
+    var keyToStates = states.Keys
+      .GroupToDictionary(CreateKey, it => it)
+      .ToDictionary(it => it.Key, it => it.Value.ToHashSet());
+    while (true)
+    {
+      // Console.WriteLine("Similar " + states.Count);
+      var first = keyToStates.Where(it => it.Value.Count > 1).Take(1).Select(it => it.Value).ToList();
+      if (first.Count == 0) break;
+      var group = first[0];
+      var me = group.Contains(init) ? init : group.First();
+      var remainder = group.Except([me]).ToList();
+      var key = CreateKey(me);
+      foreach(var state in remainder)
+      {
+        foreach(var rn in (references.GetValueOrDefault(state) ?? []).ToList())
+        {
+          var rule = rules[rn];
+          var parent = rule.CurrentState;
 
-    return current;
+          var oldKey = CreateKey(parent);
+          keyToStates[oldKey].Remove(parent);
+
+          rules[rn].NextState = me;
+          var newKey = CreateKey(parent);
+          if (keyToStates.TryGetValue(newKey, out HashSet<string>? value)) {
+            value.Add(parent);
+          } else {
+            keyToStates[newKey] = [parent];
+          }
+
+          // references should not contain rules where Current == Next
+        }
+        keyToStates[key].Remove(state);
+        references.Remove(state);
+        states.Remove(state);
+      }
+    }    
+
+    var endRules = states.Values.Sum(it => it.Count);
+    Console.WriteLine($"Optimized away {startRules - endRules} rules. Returning {endRules}");
+
+    return states.Values.SelectMany(it => it).Select(it => rules[it]).ToList();
   }
 
   public string Join(bool compact = false)
   {
-    // if (Optimized.Count == 0)
-    // {
-    //   Optimized = OptimizedRules(States);
-    // }
-    // var rules = Optimized;
-    var rules = States.SelectMany(it => it.Rules).ToList();
+    if (Optimized.Count == 0)
+    {
+      Optimized = OptimizedRules(States);
+    }
+    var rules = Optimized;
+    // var rules = States.SelectMany(it => it.Rules.Select(r => new PseudoRule(r.CurrentState.Label, r.CurrentToken, r.NextState.Label, r.NextToken, r.Direction))).ToList();
     if (compact)
     {
       var id = 0;
       var oldRules = rules;
       rules = [];
-      Dictionary<string, State> map = [];
-      map["INIT"] = Init;
-      map["HALT"] = Halt;
+      Dictionary<string, string> map = [];
+      map["INIT"] = "INIT";
+      map["HALT"] = "HALT";
       foreach (var rule in oldRules)
       {
-        if (!map.TryGetValue(rule.CurrentState.Label, out var s1))
+        if (!map.TryGetValue(rule.CurrentState, out var s1))
         {
-          map[rule.CurrentState.Label] = new State(IdToLabel(id++), this);
+          map[rule.CurrentState] = IdToLabel(id++);
         }
-        if (!map.TryGetValue(rule.NextState.Label, out var s2))
+        if (!map.TryGetValue(rule.NextState, out var s2))
         {
-          map[rule.NextState.Label] = new State(IdToLabel(id++), this);
+          map[rule.NextState] = IdToLabel(id++);
         }
-        rules.Add(rule with { CurrentState = map[rule.CurrentState.Label], NextState = map[rule.NextState.Label] });
+        rules.Add(new PseudoRule(map[rule.CurrentState], rule.CurrentToken, map[rule.NextState], rule.NextToken, rule.Direction));
       }
     }
-    return rules.Select(it => it.ToString()).Join("\n");
+    return rules.Select(it =>
+    {
+      var dir = it.Direction == Direction.Left ? 'L' : 'R';
+      return $"{it.CurrentState} {it.CurrentToken} {it.NextState} {it.NextToken} {dir}";
+  
+    }).Join("\n");
   }
 
   public void Write(string filename, bool compact = true)
