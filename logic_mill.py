@@ -283,15 +283,12 @@ class LogicMill:
 if __name__ == "__main__":
     transition_rules = parse_transition_rules(
         """
-INIT 0 INIT 0 R
 INIT 1 INIT 1 R
-INIT _ INCREMENT _ L
-INCREMENT 0 HALT 1 L
-INCREMENT 1 INCREMENT 0 L
-INCREMENT _ HALT _ L
+INIT 2 INIT _ R
+INIT _ HALT _ R
 """,
     )
     mill = LogicMill(transition_rules)
-    result, steps = mill.run("1", verbose=True)
+    result, steps = mill.run("121", verbose=True)
     print(f"Result: {result}")
     print(f"Steps: {steps}")

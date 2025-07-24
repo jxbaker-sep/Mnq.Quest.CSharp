@@ -100,16 +100,16 @@ public class Program
     public Rule Write(string tokens, Func<Rule, Rule> applyToLast)
     {
       if (tokens.Length == 0) throw new ApplicationException("Can't write 0-length string!");
-      if (tokens.Length > 1)
+      if (tokens.Length == 1)
+      {
+        return applyToLast(Write(tokens[0]));
+      }
+      else
       {
         var next = CurrentState.Parent.CreateState($"Write_{IdToLabel(CurrentState.Parent.NextStateId++)}");
         var result = Write(tokens[0]).Then(next);
         WriteRecursive(next, tokens, 1, applyToLast);
         return result;
-      }
-      else
-      {
-        return applyToLast(Write(tokens[0]));
       }
     }
     public Rule Then(State NextState) => this with { NextState = NextState };
