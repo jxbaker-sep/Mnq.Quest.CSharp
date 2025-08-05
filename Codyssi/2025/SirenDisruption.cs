@@ -42,6 +42,29 @@ public class SirenDistruption
     input.Frequencies[input.TestIndex].Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("SirenDisruption.Sample.txt", 827)]
+  [InlineData("SirenDisruption.txt", 44634)]
+  public void Part3(string inputFile, long expected)
+  {
+    var input = GetInput(inputFile);
+
+    foreach(var (a, b) in input.Swaps)
+    {
+      var (first, second) = a < b ? (a, b) : (b, a);
+      var fl = second - first;
+      var sl = input.Frequencies.Count - second;
+      var l = Math.Min(fl, sl);
+      for (var i = 0; i < l; i++)
+      {
+        (input.Frequencies[first + i], input.Frequencies[second + i]) = 
+          (input.Frequencies[second + i], input.Frequencies[first + i]);
+      }
+    }
+
+    input.Frequencies[input.TestIndex].Should().Be(expected);
+  }
+
   public record World(List<long> Frequencies, List<(int, int)> Swaps, int TestIndex);
 
   private static World GetInput(string inputFile)

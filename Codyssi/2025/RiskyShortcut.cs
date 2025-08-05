@@ -1,0 +1,60 @@
+using Mng.Quest.CSharp.Utils;
+using P = Parser.ParserBuiltins;
+using Parser;
+using FluentAssertions;
+using Utils;
+
+namespace Mnq.Quest.CSharp.Codyssi;
+
+public class RiskyShortcut
+{
+  [Theory]
+  [InlineData("RiskyShortcut.Sample.txt", 52)]
+  [InlineData("RiskyShortcut.txt", 4620)]
+  public void Part1(string inputFile, int expected)
+  {
+    var input = GetInput(inputFile);
+
+    input.Sum(l => l.Count(c => char.IsAsciiLetter(c))).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("RiskyShortcut.Sample.txt", 18)]
+  [InlineData("RiskyShortcut.txt", 674)]
+  public void Part2(string inputFile, int expected)
+  {
+    var input = GetInput(inputFile);
+
+    input.Select(Reduce).Sum(l => l.Length).Should().Be(expected);
+  }
+
+  private string Reduce(string line)
+  {
+    Stack<char> s = [];
+    foreach(var c in line)
+    {
+      if (s.Count == 0)
+      {
+        s.Push(c);
+        continue;
+      }
+      var pre = s.Peek();
+      var someDigit = char.IsDigit(pre) || char.IsDigit(c);
+      var someNotDigit = !char.IsDigit(pre) || !char.IsDigit(c);
+      if (someDigit && someNotDigit)
+      {
+        s.Pop();
+      }
+      else
+      {
+        s.Push(c);
+      }
+    }
+    return s.Join();
+  }
+
+  private static List<string> GetInput(string inputFile)
+  {
+    return CodyssiLoader.ReadLines(inputFile);
+  }
+}
