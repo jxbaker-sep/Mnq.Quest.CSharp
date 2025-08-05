@@ -39,9 +39,7 @@ public class RiskyShortcut
         continue;
       }
       var pre = s.Peek();
-      var someDigit = char.IsDigit(pre) || char.IsDigit(c);
-      var someNotDigit = !char.IsDigit(pre) || !char.IsDigit(c);
-      if (someDigit && someNotDigit)
+      if (char.IsDigit(pre) ^ char.IsDigit(c))
       {
         s.Pop();
       }
