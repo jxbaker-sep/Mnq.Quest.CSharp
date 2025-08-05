@@ -43,13 +43,7 @@ public class RiskyShortcut
     Stack<char> s = [];
     foreach(var c in line)
     {
-      if (s.Count == 0)
-      {
-        s.Push(c);
-        continue;
-      }
-      var pre = s.Peek();
-      if (char.IsDigit(pre) ^ char.IsDigit(c))
+      if (s.TryPeek(out var pre) && (char.IsDigit(pre) ^ char.IsDigit(c)))
       {
         s.Pop();
       }
@@ -66,13 +60,7 @@ public class RiskyShortcut
     Stack<char> s = [];
     foreach(var c in line)
     {
-      if (s.Count == 0 || c == '-')
-      {
-        s.Push(c);
-        continue;
-      }
-      var pre = s.Peek();
-      if (pre != '-' && (char.IsDigit(pre) ^ char.IsDigit(c)))
+      if (c != '-' && s.TryPeek(out var pre) && pre != '-' && (char.IsDigit(pre) ^ char.IsDigit(c)))
       {
         s.Pop();
       }
