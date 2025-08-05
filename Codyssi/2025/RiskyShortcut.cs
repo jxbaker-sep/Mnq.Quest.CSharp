@@ -28,6 +28,16 @@ public class RiskyShortcut
     input.Select(Reduce).Sum(l => l.Length).Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("RiskyShortcut.Sample.txt", 26)]
+  [InlineData("RiskyShortcut.txt", 1352)]
+  public void Part3(string inputFile, int expected)
+  {
+    var input = GetInput(inputFile);
+
+    input.Select(Reduce2).Sum(l => l.Length).Should().Be(expected);
+  }
+
   private string Reduce(string line)
   {
     Stack<char> s = [];
@@ -40,6 +50,29 @@ public class RiskyShortcut
       }
       var pre = s.Peek();
       if (char.IsDigit(pre) ^ char.IsDigit(c))
+      {
+        s.Pop();
+      }
+      else
+      {
+        s.Push(c);
+      }
+    }
+    return s.Join();
+  }
+
+  private string Reduce2(string line)
+  {
+    Stack<char> s = [];
+    foreach(var c in line)
+    {
+      if (s.Count == 0 || c == '-')
+      {
+        s.Push(c);
+        continue;
+      }
+      var pre = s.Peek();
+      if (pre != '-' && (char.IsDigit(pre) ^ char.IsDigit(c)))
       {
         s.Pop();
       }
