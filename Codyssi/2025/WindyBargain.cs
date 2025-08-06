@@ -24,6 +24,23 @@ public class WindyBargain
     input.Balances.OrderByDescending(it => it).Take(3).Sum().Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("WindyBargain.Sample.txt", 2542)]
+  [InlineData("WindyBargain.txt", 5402)]
+  public void Part2(string inputFile, int expected)
+  {
+    var input = GetInput(inputFile);
+
+    foreach(var t in input.Transactions)
+    {
+      var amt = Math.Min(t.Item3, input.Balances[t.Item1]);
+      input.Balances[t.Item1] -= amt;
+      input.Balances[t.Item2] += amt;
+    }
+
+    input.Balances.OrderByDescending(it => it).Take(3).Sum().Should().Be(expected);
+  }
+
 
   public record World(List<int> Balances, List<(int, int, int)> Transactions);
 
