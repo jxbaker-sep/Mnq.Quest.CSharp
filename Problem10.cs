@@ -5,7 +5,6 @@ namespace Mng.Quest.CSharp;
 
 public class Problem10
 {
-  private static bool Inited;
   private static MyProgram? Program = null;
 
   [Theory]
