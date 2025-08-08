@@ -19,6 +19,9 @@ public class Program
     public static bool operator ==(State lhs, State rhs) => lhs.Label == rhs.Label;
     public static bool operator !=(State lhs, State rhs) => !(lhs == rhs);
 
+    public State On(char token, State next) => On(token, r => r.Then(next));
+    public State LeftOn(char token, State next) => On(token, r => r.Left().Then(next));
+
     public State On(char token, Func<Rule, Rule> callback, bool replace = false)
     {
       if (!replace)
@@ -48,9 +51,21 @@ public class Program
       return rule;
     }
 
+    public Rule SkipLeft(char token)
+    {
+      var rule = new Rule(this, token, this, token, Direction.Left);
+      Rules.Add(rule);
+      return rule;
+    }
+
     public void Skip(string Lexicon)
     {
       foreach (var token in Lexicon) Skip(token);
+    }
+
+    public void SkipLeft(string Lexicon)
+    {
+      foreach (var token in Lexicon) SkipLeft(token);
     }
 
     public override bool Equals(object? obj)
@@ -89,11 +104,11 @@ public class Program
       if (tokens.Length == 0) throw new ApplicationException();
       if (tokens.Length - 1 == index)
       {
-        next.On(CurrentToken, r => applyToLast(r.Write(tokens[index])));
+        next.On(Blank, r => applyToLast(r.Write(tokens[index])));
         return;
       }
       var nextNext = CurrentState.Parent.CreateState();
-      next.On(CurrentToken, r => r.Write(tokens[index]).Then(nextNext));
+      next.On(Blank, r => r.Write(tokens[index]).Then(nextNext));
       WriteRecursive(nextNext, tokens, index + 1, applyToLast);
     }
 
