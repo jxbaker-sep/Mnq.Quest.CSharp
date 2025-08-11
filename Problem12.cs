@@ -15,7 +15,7 @@ public class Problem12 : Program
   [InlineData("1+999", "1000")]
   [InlineData("987+987654", "988641")]
   [InlineData("987654+987", "988641")]
-  public void ByRules2(string input, string expected)
+  public void BySteps(string input, string expected)
   {
     const string digits = "0123456789";
     const char plus = '+';
@@ -45,17 +45,12 @@ public class Problem12 : Program
 
     for (var i = 0; i < 10; i++)
     {
-      var rhs_void = CreateState($"rhs_void_{i}");
       lhs[i].On(equals, r => r.WriteDigit(i).Then(Halt));
       lhs[i].On(carryEquals, r => r.WriteDigit(i + 1).Left().Then(i + 1 >= 10 ? incrementThenHalt : Halt));
       for (var j = 0; j < 10; j++) lhs[i].OnDigit(j, r => r.WriteDigit(i).Then(lhs[j]));
-      lhs[i].On(plus, rhs_void);
-      lhs[i].On(Blank, r => r.WriteDigit(i).Then(Halt));
 
       var rhs = Enumerable.Range(0, 10).Select(j => CreateState($"rhs_{i}_{j}")).ToList();
-      for (var j = 0; j < 10; j++) rhs_void.OnDigit(j, rhs[j]);
-      rhs_void.On(equals, r => r.WriteDigit(i).Left().Then(reverse));
-      rhs_void.On(carryEquals, r => r.WriteDigit(i+1).Left().Then((i+1) >= 10 ? reverseCarry : reverse));
+      lhs[i].On(plus, rhs[0]);
 
 
       for (var j = 0; j < 10; j++)
@@ -71,7 +66,7 @@ public class Problem12 : Program
 
     // #######################################################
 
-    Write("Problem12.ByRules2.rules");
+    Write("Problem12.BySteps.rules");
 
     var result = new LogicMill(Join()).RunToHalt(input);
     result.Result.Should().Be(expected);
