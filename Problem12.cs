@@ -56,7 +56,6 @@ public class Problem12 : Program
       for (var j = 0; j < 10; j++)
       {
         for (var k = 0; k < 10; k++) rhs[j].OnDigit(k, rhs[k]);
-        var mye = (i + j > 10) ? carryEquals : equals;
         rhs[j].On(Blank, r => r.WriteDigit(i+j).Left().Then(i + j >= 10 ? reverseCarry : reverse));
         rhs[j].On(equals, r => r.WriteDigit(i+j).Left().Then(i + j >= 10 ? reverseCarry : reverse));
         rhs[j].On(carryEquals, r => r.WriteDigit(i+j+1).Left().Then(i + j+1 >= 10 ? reverseCarry : reverse));
