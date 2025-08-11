@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using FluentAssertions;
 using Utils;
 
@@ -13,98 +15,63 @@ public class Problem12 : Program
   [InlineData("1+999", "1000")]
   [InlineData("987+987654", "988641")]
   [InlineData("987654+987", "988641")]
-  public void ByRules(string input, string expected)
+  public void ByRules2(string input, string expected)
   {
-    var digits = "0123456789";
-    var plus = '+';
-    var ignore = '.';
-    var carry = 'c';
-    var equals = '=';
+    const string digits = "0123456789";
+    const char plus = '+';
+    const char equals = '=';
+    const char carryEquals = 'c';
 
-    List<State> lookingLhs = Enumerable.Range(0, 10).Select(i => CreateState($"lhs_{i}")).ToList();
+    Init.On(plus, r => r.Write(Blank));
+    Init.On(equals, r => r.Write(Blank).Then(Halt));
+    Init.On(carryEquals, r => r.Write('1').Then(Halt));
+    var lhs = Enumerable.Range(0, 10).Select(i => CreateState($"lhs_{i}")).ToList();
+    for (var i = 0; i < 10; i++) Init.OnDigit(i, r => r.Write(Blank).Then(lhs[i]));
 
-    for (var i = 0; i <= 9; i++)
+    var reverse = CreateState("reverse");
+    var reverseCarry = CreateState("reverseCarry");
+    var reverse1 = CreateState("reverse1")
+      .SkipLeft(digits + plus + equals + carryEquals)
+      .On(Blank, Init);
+    reverse.On(digits + plus, r => r.Write(equals).Left().Then(reverse1));
+    reverse.On(Blank, Halt);
+    reverseCarry.On(digits + plus, r => r.Write(carryEquals).Left().Then(reverse1));
+    reverseCarry.On(Blank, r => r.Write('1').Then(Halt));
+
+    var incrementThenHalt = CreateState("incrementThenHalt");
+    for (var i = 0; i <=8; i++) incrementThenHalt.OnDigit(i, r => r.WriteDigit(i + 1).Then(Halt));
+    incrementThenHalt.OnDigit(9, r => r.Write('0').Left());
+    incrementThenHalt.On(Blank, r => r.Write('1').Then(Halt));
+
+    for (var i = 0; i < 10; i++)
     {
-      char token = $"{i}"[0];
-      Init.On(token, r => r.Then(lookingLhs[i]));
-      foreach (var other in lookingLhs) other.On(token, r => r.Then(lookingLhs[i]));
-    }
+      var rhs_void = CreateState($"rhs_void_{i}");
+      lhs[i].On(equals, r => r.WriteDigit(i).Then(Halt));
+      lhs[i].On(carryEquals, r => r.WriteDigit(i + 1).Left().Then(i + 1 >= 10 ? incrementThenHalt : Halt));
+      for (var j = 0; j < 10; j++) lhs[i].OnDigit(j, r => r.WriteDigit(i).Then(lhs[j]));
+      lhs[i].On(plus, rhs_void);
+      lhs[i].On(Blank, r => r.WriteDigit(i).Then(Halt));
 
-    var rewind = CreateState("rewind");
-    var finalize = CreateState("finalize");
-    var plusZero = CreateState("plusZero");
+      var rhs = Enumerable.Range(0, 10).Select(j => CreateState($"rhs_{i}_{j}")).ToList();
+      for (var j = 0; j < 10; j++) rhs_void.OnDigit(j, rhs[j]);
+      rhs_void.On(equals, r => r.WriteDigit(i).Left().Then(reverse));
+      rhs_void.On(carryEquals, r => r.WriteDigit(i+1).Left().Then((i+1) >= 10 ? reverseCarry : reverse));
 
-    for (var i = 0; i <= 9; i++)
-    {
-      var lhs = lookingLhs[i];
-      lhs.Skip(ignore);
-      char token = $"{i}"[0];
 
-      List<State> lookingRhs = Enumerable.Range(0, 10).Select(j => CreateState($"rhs_{i}_{j}")).ToList();
-      lhs.On(plus, r => r.Then(lookingRhs[0]));
-
-      for (var j = 0; j <= 9; j++)
+      for (var j = 0; j < 10; j++)
       {
-        var rhs = lookingRhs[j];
-        char token2 = $"{j}"[0];
-        if (i == 0) plusZero.On(token2, r => r.Then(rhs));
-        foreach (var other in lookingRhs) other.On(token2, r => r.Then(rhs));
-
-        var toEnd = CreateState($"toEnd_{i}_{j}");
-        rhs.On(Blank, r => r.Write(equals).Then(toEnd));
-        rhs.On(equals, r => r.Then(toEnd));
-        rhs.Skip(ignore);
-
-        var carry_carry = (i + j + 1) >= 10 ? $"{(i+j+1) % 10}c" : $"{(i+j+1) % 10}";
-        var non_carry = (i + j) >= 10 ? $"{(i+j) % 10}c" : $"{(i+j) % 10}";
-        toEnd.Skip(digits);
-        toEnd.On(carry, r => r.Write(carry_carry, after => after.Left().Then(rewind)));
-        toEnd.On(Blank, r => r.Write(non_carry, after => after.Left().Then(rewind)));
+        for (var k = 0; k < 10; k++) rhs[j].OnDigit(k, rhs[k]);
+        var mye = (i + j > 10) ? carryEquals : equals;
+        rhs[j].On(Blank, r => r.WriteDigit(i+j).Left().Then(i + j >= 10 ? reverseCarry : reverse));
+        rhs[j].On(equals, r => r.WriteDigit(i+j).Left().Then(i + j >= 10 ? reverseCarry : reverse));
+        rhs[j].On(carryEquals, r => r.WriteDigit(i+j+1).Left().Then(i + j+1 >= 10 ? reverseCarry : reverse));
       }
     }
-
-    Init.Skip(Blank);
-    Init.On(plus, r => r.Write(Blank).Then(plusZero));
-    Init.On(ignore, r => r.Write(Blank));
-    plusZero.On(ignore, r => r.Write(Blank).Then(finalize));
-    finalize.On(ignore, r => r.Write(Blank));
-    var reverse = CreateState("reverse");
-    finalize.On(equals, r => r.Then(reverse));
-
-    var reverseFF = CreateState("reverseFF");
-    reverseFF.Skip(digits);
-    reverseFF.On(equals, r => r.Then(reverse));
-    reverse.Skip(ignore);
-    foreach(var digit in digits + carry) {
-      var me = CreateState($"reverse_{digit}");
-      reverse.On(digit, r => r.Write(ignore).Left().Then(me));
-      me.SkipLeft(digits + carry + equals + ignore);
-      me.On(Blank, r => r.Write(digit == carry ? '1' : digit).Then(reverseFF));
-    }
-    var finalize2 = CreateState("finalize2");
-    reverse.LeftOn(Blank, finalize2); // TODO: could finalize after "c" too
-    finalize2.On(ignore, r => r.Left().Write(Blank));
-    finalize2.On(equals, r => r.Left().Write(Blank).Then(Halt));
-
-    var rewind_delete_1 = CreateState("rewind_delete_1");
-    var rewind_delete_2 = CreateState("rewind_delete_2");
-    var rewind_delete_3 = CreateState("rewind_delete_3");
-    rewind.SkipLeft(digits);
-    rewind.On(equals, r => r.Left().Then(rewind_delete_1));
-    rewind_delete_1.SkipLeft(ignore);
-    rewind_delete_1.On(digits, r => r.Write(ignore).Left().Then(rewind_delete_2));
-    rewind_delete_1.On(plus, r => r.Left().Then(rewind_delete_3));
-    rewind_delete_2.SkipLeft(digits);
-    rewind_delete_2.On(Blank, r => r.Then(plusZero));
-    rewind_delete_2.On(plus, r => r.Left().Then(rewind_delete_3));
-    rewind_delete_3.SkipLeft(ignore);
-    rewind_delete_3.On(Blank, r => r.Then(Init));
-    rewind_delete_3.On(digits, r => r.Write(ignore).Left().Then(Init));
 
 
     // #######################################################
 
-    Write("Problem12.ByRules.rules");
+    Write("Problem12.ByRules2.rules");
 
     var result = new LogicMill(Join()).RunToHalt(input);
     result.Result.Should().Be(expected);

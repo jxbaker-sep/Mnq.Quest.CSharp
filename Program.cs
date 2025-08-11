@@ -20,7 +20,10 @@ public class Program
     public static bool operator !=(State lhs, State rhs) => !(lhs == rhs);
 
     public State On(char token, State next) => On(token, r => r.Then(next));
+    public State OnDigit(int value, Func<Rule, Rule> callback) => On($"{value % 10}"[0], callback);
+    public State OnDigit(int value, State nextState) => On($"{value % 10}"[0], nextState);
     public State LeftOn(char token, State next) => On(token, r => r.Left().Then(next));
+    
 
     public State On(char token, Func<Rule, Rule> callback, bool replace = false)
     {
@@ -63,9 +66,10 @@ public class Program
       foreach (var token in Lexicon) Skip(token);
     }
 
-    public void SkipLeft(string Lexicon)
+    public State SkipLeft(string Lexicon)
     {
       foreach (var token in Lexicon) SkipLeft(token);
+      return this;
     }
 
     public override bool Equals(object? obj)
@@ -98,6 +102,8 @@ public class Program
       if (Token == ' ') throw new ApplicationException("Cannot write token <space>.");
       return this with { NextToken = Token };
     }
+
+    public Rule WriteDigit(int value) => Write($"{value % 10}"[0]);
 
     private void WriteRecursive(State next, string tokens, int index, Func<Rule, Rule> applyToLast)
     {
