@@ -71,4 +71,31 @@ public class Problem12 : Program
     result.Result.Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("2+5", "7")]
+  [InlineData("37+89", "126")]
+  [InlineData("999+1", "1000")]
+  [InlineData("1+999", "1000")]
+  [InlineData("987+987654", "988641")]
+  [InlineData("987654+987", "988641")]
+  public void ByRules(string input, string expected)
+  {
+    const string digits = "0123456789";
+    const char plus = '+';
+
+    var lhs_null = CreateState("lhs_null");
+    lhs_null.On(plus, r => r.Write(Blank).Then(Halt));
+    for (var i = 0; i <= 9; i++)
+
+    Init.Skip(digits + plus);
+    Init.On(Blank, r => r.Left().Then(lhs_null));
+
+    // #######################################################
+
+    Write("Problem12.ByRules.rules");
+
+    var result = new LogicMill(Join()).RunToHalt(input);
+    result.Result.Should().Be(expected);
+  }
+
 }
