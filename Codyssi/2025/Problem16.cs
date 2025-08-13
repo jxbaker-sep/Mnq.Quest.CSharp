@@ -26,6 +26,36 @@ public class Problem16
         .Be(expected);
   }
 
+  [Theory]
+  [InlineData("Problem16.Sample.txt", 11496)]
+  [InlineData("Problem16.txt", 35722143)] 
+  public void Part2(string inputFile, long expected)
+  {
+    var input = GetInput(inputFile);
+
+    var instructions = new Queue<IInstruction>(input.Instructions);
+
+    IInstruction taken = new ShiftBy(0, new ColSelector(0));
+
+    foreach (var op in input.Flow)
+    {
+      if (op == "TAKE") {
+        taken = instructions.Dequeue();
+      }
+      else if (op == "CYCLE") {
+        instructions.Enqueue(taken);
+      }
+      else if (op == "ACT") {
+        taken.Operate(input.Grid);
+      }
+    }
+
+    input.Grid.Concat(input.Grid.Transpose())
+        .Max(row => row.Select(it => it.Value).Sum())
+        .Should()
+        .Be(expected);
+  }
+
   public interface IInstruction
   {
     void Operate(List<List<WhirlpoolNumber>> grid);
