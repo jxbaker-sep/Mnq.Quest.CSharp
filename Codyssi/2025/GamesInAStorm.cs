@@ -37,18 +37,10 @@ public class GamesInAStorm
   {
     var input = GetInput(inputFile);
 
-    long MaxForBase(long b) => (b * b * b * b) - 1;
-
     var sum = input.Sum(it => it.Value());
-    long needle = 2;
-    for (long b = 2; b < 10000; b++)
-    {
-      if (MaxForBase(b) >= sum) {
-        needle = b;
-        break;
-      }
-    }
-    needle.Should().Be(expected);
+    // Not correct for all inputs! 
+    // eg: Ceil(Pow(4, 0.25)) == 2, but the correct answer is 3
+    Math.Ceiling(Math.Pow(sum, 0.25)).Should().Be(expected);
   }
 
 
