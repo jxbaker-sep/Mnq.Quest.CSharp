@@ -24,36 +24,47 @@ public class Problem18
   }
 
   [Theory]
-  [InlineData("Problem18.Sample.txt", 8256)]
-  // [InlineData("Problem18.txt", 0)]
-  public void Part2(string inputFile, long expected)
+  [InlineData("Problem18.Sample.txt", 30, 8256)]
+  [InlineData("Problem18.Sample.txt", 150, 59388)]
+  [InlineData("Problem18.txt", 30, 57838)]
+  [InlineData("Problem18.txt", 300, 0)]
+  public void Part2(string inputFile, long remaining, long expected)
   {
     var items = GetInput(inputFile);
 
-    var temp = GetCombinations(items, 30)
+    var temp = GetCombinations(items, 0, remaining)
       .OrderByDescending(items => items.Sum(it => it.Quality))
       .ThenBy(items => items.Sum(it => it.UniqueMaterials))
-      .ToList();
-    temp.Select(it => it.Sum(it => it.Quality) * it.Sum(it => it.UniqueMaterials))
-      .ToList()
+      .Select(it => it.Sum(it => it.Quality) * it.Sum(it => it.UniqueMaterials))
       .First()
       .Should().Be(expected);
   }
 
-  IEnumerable<List<Item>> GetCombinations(List<Item> items, long remaining)
-  {
-    items = items.Where(it => it.Cost <= remaining).ToList();
-    if (items.Count == 0) yield break;
-    // First, compute all sets containing the first item
-    var subs = GetCombinations(items[1..], remaining - items[0].Cost).ToList();
-    if (subs.Count == 0) {
-      yield return [items[0]];
-    }
-    foreach (var sub in subs) yield return [items[0], .. sub];
+  Dictionary<(int, long), List<List<Item>>> Cache = [];
 
-    // Then return all sets not containing the first item
-    subs = GetCombinations(items[1..], remaining).ToList();
-    foreach (var sub in subs) yield return sub;
+  List<List<Item>> GetCombinations(List<Item> items, int index, long remaining)
+  {
+    if (index >= items.Count) return [];
+    var key = (index, remaining);
+    if (Cache.TryGetValue(key, out var needle)) return needle;
+    // First, compute all sets containing the first item
+    var current = items[index];
+    List<List<Item>> result = [];
+    if (current.Cost <= remaining)
+    {
+      var subs2 = GetCombinations(items, index + 1, remaining - current.Cost);
+      if (subs2.Count == 0)
+      {
+        result.Add([current]);
+      }
+      foreach (var sub in subs2) result.Add([current, .. sub]);
+    }
+
+    // Then return all sets not containing the first item that couldn't contain the first item
+    var subs = GetCombinations(items, index + 1, remaining);
+    foreach (var sub in subs.Where(it => remaining - it.Sum(it => it.Cost) < current.Cost)) result.Add(sub);
+    Cache[key] = result;
+    return result;
   }
 
   record Item(long Index, string Code, long Quality, long Cost, long UniqueMaterials);
