@@ -31,7 +31,7 @@ public class Problem20
     // Console.WriteLine($"{cube.Facing} = {cube.Absorption(cube.Facing)}");
 
     new[] { 1, -1, 2, -2, 3, -3 }
-      .Select(it => cube.Absorption(new Point3(0, it, 0)))
+      .Select(it => cube.Absorption(it))
       .OrderByDescending(it => it)
       .Take(2)
       .Product()
@@ -63,6 +63,8 @@ public class Problem20
         face[y][x] += i.Value;
       }
     }
+
+    cube.Absorb((stopRow - startRow) * (stopCol - startCol) * i.Value);
   }
 
   public class CubeOfGrids
@@ -70,6 +72,14 @@ public class Problem20
     public Point3 Facing { get; private set; } = new(1,2,3);
     private readonly Dictionary<long, List<List<long>>> Faces = [];
     public int Size { get; }
+    private readonly Dictionary<long, long> Absorptions = new (){
+      { 1, 0 },
+      { -1, 0 },
+      { 2, 0 },
+      { -2, 0 },
+      { 3, 0 },
+      { -3, 0 },
+    };
 
     public CubeOfGrids(int size)
     {
@@ -120,23 +130,28 @@ public class Problem20
     public void Print()
     {
       Console.WriteLine($"Facing = {Facing}");
-      Console.WriteLine($"Up: {Absorption(Facing)}");
+      Console.WriteLine($"Up: {Absorption(Facing.Y)}");
       PrintGrid(Facing);
-      Console.WriteLine($"Down: {Absorption(Facing.RotateDown().RotateDown())}");
+      Console.WriteLine($"Down: {Absorption(Facing.RotateDown().RotateDown().Y)}");
       PrintGrid(Facing.RotateDown().RotateDown());
-      Console.WriteLine($"Left: {Absorption(Facing.RotateRight())}");
+      Console.WriteLine($"Left: {Absorption(Facing.RotateRight().Y)}");
       PrintGrid(Facing.RotateRight());
-      Console.WriteLine($"Right: {Absorption(Facing.RotateLeft())}");
+      Console.WriteLine($"Right: {Absorption(Facing.RotateLeft().Y)}");
       PrintGrid(Facing.RotateLeft());
-      Console.WriteLine($"Front: {Absorption(Facing.RotateDown())}");
+      Console.WriteLine($"Front: {Absorption(Facing.RotateDown().Y)}");
       PrintGrid(Facing.RotateDown());
-      Console.WriteLine($"Back: {Absorption(Facing.RotateUp())}");
+      Console.WriteLine($"Back: {Absorption(Facing.RotateUp().Y)}");
       PrintGrid(Facing.RotateUp());
     }
 
-    public long Absorption(Point3 facing)
+    public void Absorb(long value)
     {
-      return Faces[facing.Y].Sum(it => it.Sum()) - Size * Size;
+      Absorptions[Facing.Y] += value;
+    }
+
+    public long Absorption(long facing)
+    {
+      return Absorptions[facing];
     }
 
     public void PrintGrid(Point3 facing)
