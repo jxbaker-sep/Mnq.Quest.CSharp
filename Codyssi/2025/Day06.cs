@@ -1,8 +1,5 @@
 using FluentAssertions;
-using P = Parser.ParserBuiltins;
 using Parser;
-using Utils;
-using Mng.Quest.CSharp.Utils;
 namespace Mnq.Quest.CSharp.Codyssi;
 
 public class Day06

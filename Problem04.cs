@@ -1,4 +1,3 @@
-using System.Runtime.ExceptionServices;
 using FluentAssertions;
 using Utils;
 

@@ -1,5 +1,3 @@
-using Xunit.Sdk;
-
 namespace Utils;
 
 public static class EnumerableExtensions

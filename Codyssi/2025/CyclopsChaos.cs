@@ -2,7 +2,6 @@ using Mng.Quest.CSharp.Utils;
 using P = Parser.ParserBuiltins;
 using Parser;
 using FluentAssertions;
-using Utils;
 
 namespace Mnq.Quest.CSharp.Codyssi;
 

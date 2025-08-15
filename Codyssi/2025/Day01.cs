@@ -1,6 +1,5 @@
 
 using FluentAssertions;
-using Utils;
 
 namespace Mnq.Quest.CSharp.Codyssi;
 
