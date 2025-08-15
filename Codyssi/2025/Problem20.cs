@@ -73,12 +73,12 @@ public class Problem20
 
     public CubeOfGrids(int size)
     {
-      Faces[Facing.Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
-      Faces[Facing.RotateDown().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
-      Faces[Facing.RotateUp().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
-      Faces[Facing.RotateLeft().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
-      Faces[Facing.RotateRight().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
-      Faces[Facing.RotateDown().RotateDown().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(0L, size).ToList()).ToList();
+      Faces[Facing.Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
+      Faces[Facing.RotateDown().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
+      Faces[Facing.RotateUp().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
+      Faces[Facing.RotateLeft().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
+      Faces[Facing.RotateRight().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
+      Faces[Facing.RotateDown().RotateDown().Y] = Enumerable.Range(0, size).Select(it => Enumerable.Repeat(1L, size).ToList()).ToList();
       Size = size;
     }
 
@@ -136,7 +136,7 @@ public class Problem20
 
     public long Absorption(Point3 facing)
     {
-      return Faces[facing.Y].Sum(it => it.Sum());
+      return Faces[facing.Y].Sum(it => it.Sum()) - Size * Size;
     }
 
     public void PrintGrid(Point3 facing)
