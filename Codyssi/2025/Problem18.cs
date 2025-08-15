@@ -27,44 +27,43 @@ public class Problem18
   [InlineData("Problem18.Sample.txt", 30, 8256)]
   [InlineData("Problem18.Sample.txt", 150, 59388)]
   [InlineData("Problem18.txt", 30, 57838)]
-  [InlineData("Problem18.txt", 300, 0)]
+  [InlineData("Problem18.txt", 300, 532770)]
   public void Part2(string inputFile, long remaining, long expected)
   {
     var items = GetInput(inputFile);
 
-    var temp = GetCombinations(items, 0, remaining)
-      .OrderByDescending(items => items.Sum(it => it.Quality))
-      .ThenBy(items => items.Sum(it => it.UniqueMaterials))
-      .Select(it => it.Sum(it => it.Quality) * it.Sum(it => it.UniqueMaterials))
-      .First()
-      .Should().Be(expected);
+    var temp = GetCombinations(items, 0, remaining);
+    (temp.Quality * temp.UniqueMaterials).Should().Be(expected);
   }
 
-  Dictionary<(int, long), List<List<Item>>> Cache = [];
+  Dictionary<(int, long), (long, long)> Cache = [];
 
-  List<List<Item>> GetCombinations(List<Item> items, int index, long remaining)
+  (long Quality, long UniqueMaterials) GetCombinations(List<Item> items, int index, long remaining)
   {
-    if (index >= items.Count) return [];
+    if (index >= items.Count) return (0, 0);
     var key = (index, remaining);
     if (Cache.TryGetValue(key, out var needle)) return needle;
-    // First, compute all sets containing the first item
+    // First, compute total quality containing the current item
     var current = items[index];
-    List<List<Item>> result = [];
+    long myQuality = 0;
+    long myUniqueMaterials = 0;
     if (current.Cost <= remaining)
     {
+      // Get the total quality of all remaining items that can be bought after buying the current item
       var subs2 = GetCombinations(items, index + 1, remaining - current.Cost);
-      if (subs2.Count == 0)
-      {
-        result.Add([current]);
-      }
-      foreach (var sub in subs2) result.Add([current, .. sub]);
+      myQuality = subs2.Quality + current.Quality;
+      myUniqueMaterials = subs2.UniqueMaterials + current.UniqueMaterials;
     }
 
-    // Then return all sets not containing the first item that couldn't contain the first item
+    // Then look at total quality that can be obtained without the current item. If it is larger, return that instead.
     var subs = GetCombinations(items, index + 1, remaining);
-    foreach (var sub in subs.Where(it => remaining - it.Sum(it => it.Cost) < current.Cost)) result.Add(sub);
-    Cache[key] = result;
-    return result;
+    if (subs.Quality > myQuality || (subs.Quality == myQuality && subs.UniqueMaterials < myUniqueMaterials))
+    {
+      myQuality = subs.Quality;
+      myUniqueMaterials = subs.UniqueMaterials;
+    }
+    Cache[key] = (myQuality, myUniqueMaterials);
+    return Cache[key];
   }
 
   record Item(long Index, string Code, long Quality, long Cost, long UniqueMaterials);
