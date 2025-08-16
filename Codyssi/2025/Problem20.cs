@@ -17,25 +17,25 @@ public class Problem20
   public void Part1(string inputFile, int size, long expected)
   {
     var world = GetInput(inputFile);
-    var cube = NewMethod(size, world);
+    var cube = Run(size, world);
 
     new[] { 1, -1, 2, -2, 3, -3 }
-      .Select(it => cube.Absorption(it))
+      .Select(face => cube.Absorption[face])
       .OrderByDescending(it => it)
       .Take(2)
       .Product()
       .Should().Be(expected);
   }
 
-  private static CubeOfGrids NewMethod(int size, World world)
+  private static CubeOfGrids Run(int size, World world, bool part3 = false)
   {
     var cube = new CubeOfGrids(size);
     foreach (var (i, t) in world.Instructions.Zip(world.Twists))
     {
-      ApplyInstruction(cube, i);
+      ApplyInstruction(cube.Facing.Y, cube, i, part3);
       ApplyTwist(cube, t);
     }
-    ApplyInstruction(cube, world.Instructions[^1]);
+    ApplyInstruction(cube.Facing.Y, cube, world.Instructions[^1], part3);
     return cube;
   }
 
@@ -80,7 +80,6 @@ public class Problem20
     foreach (var t in twists)
     {
       ApplyTwist(cube, t);
-      cube.PrintGrid(new(0, 2, 0)); Console.WriteLine("++++");
     }
     $"{cube.Current[0][1]}{cube.Current[1][2]}{cube.Current[2][1]}{cube.Current[1][0]}".Should().Be(expected);
   }
@@ -93,20 +92,74 @@ public class Problem20
   {
     var expected = BigInteger.Parse(rep_expected);
     var world = GetInput(inputFile);
-    var cube = NewMethod(size, world);
+    var cube = Run(size, world);
 
     BigInteger result = new(1);
     foreach (var item in new[] { 1, -1, 2, -2, 3, -3 }
       .Select(it => cube.Dominant(it)))
     {
-      Console.WriteLine(item);
       result *= item;
     }
     result.Should().Be(expected);
   }
 
-  private static void ApplyInstruction(CubeOfGrids cube, Instruction i)
+  [Theory]
+  [InlineData("Problem20.Sample.1.txt", 3, "59477096746944")]
+  [InlineData("Problem20.Sample.2.txt", 80, "118479211258970523303936")]
+  [InlineData("Problem20.txt", 80, "13462100238630197295009")]
+  public void Part3(string inputFile, int size, string rep_expected)
   {
+    var expected = BigInteger.Parse(rep_expected);
+    var world = GetInput(inputFile);
+    var cube = Run(size, world, true);
+
+    BigInteger result = new(1);
+    foreach (var item in new[] { 1, -1, 2, -2, 3, -3 }
+      .Select(it => cube.Dominant(it)))
+    {
+      result *= item;
+    }
+    result.Should().Be(expected);
+  }
+
+  private static void ApplyPart3Instruction(CubeOfGrids cube, Instruction i)
+  {
+    if (i.Selector == "COL")
+    {
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateUp();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateUp();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateUp();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateUp();
+    }
+    else if (i.Selector == "ROW")
+    {
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateLeft();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateLeft();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateLeft();
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+      cube.RotateLeft();
+    }
+    else if (i.Selector == "FACE")
+    {
+      ApplyInstruction(cube.Facing.Y, cube, i, false);
+    }
+    else throw new ApplicationException();
+  }
+
+  private static void ApplyInstruction(long face, CubeOfGrids cube, Instruction i, bool part3)
+  {
+    if (part3)
+    {
+      ApplyPart3Instruction(cube, i);
+      return;
+    }
     var startRow = 0;
     var startCol = 0;
     var stopRow = cube.Size;
@@ -127,7 +180,7 @@ public class Problem20
     {
       for (var y = startRow; y < stopRow; y++)
       {
-        cube.AddPoint(new(x, y), i.Value);
+        cube.AddPoint(face, new(x, y), i.Value);
       }
     }
 
@@ -138,7 +191,7 @@ public class Problem20
     public Point3 Facing { get; private set; } = new(1, 2, 3);
     private readonly Dictionary<long, List<List<long>>> Faces = [];
     public int Size { get; }
-    private readonly Dictionary<long, long> Absorptions = new(){
+    public readonly Dictionary<long, long> Absorption = new(){
       { 1, 0 },
       { -1, 0 },
       { 2, 0 },
@@ -147,13 +200,13 @@ public class Problem20
       { -3, 0 },
     };
 
-    public void AddPoint(Point point, long increment)
+    public void AddPoint(long face, Point point, long increment)
     {
-      Absorb(increment);
-      
-      var value = Current.At(point) + increment;
+      Absorption[face] += increment;
+
+      var value = Faces[face].At(point) + increment;
       if (value > 100) value -= 100;
-      Current.Set(point, value);
+      Faces[face].Set(point, value);
     }
 
 
@@ -179,7 +232,6 @@ public class Problem20
 
     public CubeOfGrids RotateUp()
     {
-      var original = Facing;
       Facing = Facing.RotateUp();
       Roll(Facing.RotateLeft(), Facing.RotateRight());
       return this;
@@ -187,7 +239,6 @@ public class Problem20
 
     public CubeOfGrids RotateDown()
     {
-      var original = Facing;
       Facing = Facing.RotateDown();
       Roll(Facing.RotateRight(), Facing.RotateLeft());
       return this;
@@ -233,16 +284,6 @@ public class Problem20
       PrintGrid(Facing.RotateDown());
       Console.WriteLine($"Back: {Dominant(Facing.RotateUp().Y)}");
       PrintGrid(Facing.RotateUp());
-    }
-
-    private void Absorb(long value)
-    {
-      Absorptions[Facing.Y] += value;
-    }
-
-    public long Absorption(long facing)
-    {
-      return Absorptions[facing];
     }
 
     public long Dominant(long facing)
