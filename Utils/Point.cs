@@ -1,6 +1,3 @@
-
-
-
 namespace Mng.Quest.CSharp.Utils;
 
 
@@ -15,6 +12,9 @@ public record Point(long X, long Y) {
   public IEnumerable<Point> CardinalNeighbors() => Vector.Cardinals.Select(v => this + v);
   public IEnumerable<Point> InterCardinalNeighbors() => Vector.InterCardinals.Select(v => this + v);
   public IEnumerable<Point> CompassRoseNeighbors() => Vector.CompassRose.Select(v => this + v);
+
+  internal Point RotateRight() => new(-Y, X);
+  internal Point RotateLeft() => new(Y, -X);
 
   public IEnumerable<Point> Follow(Vector v)
   {

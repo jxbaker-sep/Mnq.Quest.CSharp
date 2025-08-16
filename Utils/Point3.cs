@@ -1,3 +1,5 @@
+namespace Mng.Quest.CSharp.Utils;
+
 public record Point3(long X, long Y, long Z);
 
 public static class Point3Extensions
