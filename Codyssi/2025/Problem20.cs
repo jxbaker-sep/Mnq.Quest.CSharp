@@ -49,21 +49,21 @@ public class Problem20
   }
 
   [Theory]
-  // [InlineData("UD", "1234")]
-  // [InlineData("DU", "1234")]
-  // [InlineData("LR", "1234")]
-  // [InlineData("RL", "1234")]
-  // [InlineData("UUUU", "1234")]
-  // [InlineData("DDDD", "1234")]
-  // [InlineData("RRRR", "1234")]
-  // [InlineData("LLLL", "1234")]
-  // [InlineData("LLUU", "3412")]
-  // [InlineData("UULL", "3412")]
-  // [InlineData("DDLL", "3412")]
-  // [InlineData("DDRR", "3412")]
-  // [InlineData("RUL", "4123")]
-  // [InlineData("RDL", "2341")]
-  // [InlineData("DRU", "4123")]
+  [InlineData("UD", "1234")]
+  [InlineData("DU", "1234")]
+  [InlineData("LR", "1234")]
+  [InlineData("RL", "1234")]
+  [InlineData("UUUU", "1234")]
+  [InlineData("DDDD", "1234")]
+  [InlineData("RRRR", "1234")]
+  [InlineData("LLLL", "1234")]
+  [InlineData("LLUU", "3412")]
+  [InlineData("UULL", "3412")]
+  [InlineData("DDLL", "3412")]
+  [InlineData("DDRR", "3412")]
+  [InlineData("RUL", "4123")]
+  [InlineData("RDL", "2341")]
+  [InlineData("DRU", "4123")]
   [InlineData("URD", "2341")]
   public void Sanity(string twists, string expected)
   {
@@ -88,15 +88,7 @@ public class Problem20
   [Theory]
   [InlineData("Problem20.Sample.1.txt", 3, "118727856")]
   [InlineData("Problem20.Sample.2.txt", 80, "369594451623936000000")]
-  [InlineData("Problem20.txt", 80, "0")]
-  // All incorrect:
-  // 60128033898472755775560 incorrect; 
-  // 63742679479353940191360 incorrect;
-  // 65093540091649302591072 
-  // 65446264676866145170944. incorrect
-  // 67713245520460915330560 incorrect
-  // 67986085791007914213600 incorrect
-  // 69059661574593831762432 incorrect;
+  [InlineData("Problem20.txt", 80, "70948207997314582072320")]
   public void Part2(string inputFile, int size, string rep_expected)
   {
     var expected = BigInteger.Parse(rep_expected);
@@ -119,7 +111,6 @@ public class Problem20
     var startCol = 0;
     var stopRow = cube.Size;
     var stopCol = cube.Size;
-    var face = cube.Current;
 
     if (i.Selector == "ROW")
     {
@@ -136,15 +127,10 @@ public class Problem20
     {
       for (var y = startRow; y < stopRow; y++)
       {
-        face[y][x] += i.Value;
-        if (face[y][x] > 100)
-        {
-          face[y][x] -= 100;
-        }
+        cube.AddPoint(new(x, y), i.Value);
       }
     }
 
-    cube.Absorb((stopRow - startRow) * (stopCol - startCol) * i.Value);
   }
 
   public class CubeOfGrids
@@ -161,13 +147,14 @@ public class Problem20
       { -3, 0 },
     };
 
-    private readonly Dictionary<long, (Point3 Up, Point3 Right)> FaceToUpRight = new()
+    public void AddPoint(Point point, long increment)
     {
-      {2, (new(0,0,1), new(1, 0, 0))},
-      {-2, (new(0,0,-1), new(1, 0, 0))},
-      {3, (new(0,0,1), new(1, 0, 0))},
-      {-3, (new(0,0,-1), new(1, 0, 0))},
-    };
+      Absorb(increment);
+      
+      var value = Current.At(point) + increment;
+      if (value > 100) value -= 100;
+      Current.Set(point, value);
+    }
 
 
     public CubeOfGrids(int size)
@@ -195,8 +182,6 @@ public class Problem20
       var original = Facing;
       Facing = Facing.RotateUp();
       Roll(Facing.RotateLeft(), Facing.RotateRight());
-      Faces[original.Y] = Faces[original.Y].GridFlipVertical();
-      Faces[-original.Y] = Faces[-original.Y].GridFlipVertical();
       return this;
     }
 
@@ -205,8 +190,6 @@ public class Problem20
       var original = Facing;
       Facing = Facing.RotateDown();
       Roll(Facing.RotateRight(), Facing.RotateLeft());
-      Faces[original.RotateDown().Y] = Faces[original.RotateDown().Y].GridFlipVertical();
-      Faces[original.RotateUp().Y] = Faces[original.RotateUp().Y].GridFlipVertical();
       return this;
     }
 
@@ -215,8 +198,10 @@ public class Problem20
       var original = Facing;
       Facing = Facing.RotateLeft();
       Roll(Facing.RotateDown(), Facing.RotateUp());
-      Faces[original.Y] = Faces[original.Y].GridFlipHorizontal();
-      Faces[-original.Y] = Faces[-original.Y].GridFlipHorizontal();
+      Faces[original.Y] = Faces[original.Y].GridRotateLeft();
+      Faces[original.RotateLeft().Y] = Faces[original.RotateLeft().Y].GridRotateLeft();
+      Faces[original.RotateLeft().RotateLeft().Y] = Faces[original.RotateLeft().RotateLeft().Y].GridRotateLeft();
+      Faces[original.RotateLeft().RotateLeft().RotateLeft().Y] = Faces[original.RotateLeft().RotateLeft().RotateLeft().Y].GridRotateLeft();
       return this;
     }
 
@@ -225,8 +210,10 @@ public class Problem20
       var original = Facing;
       Facing = Facing.RotateRight();
       Roll(Facing.RotateUp(), Facing.RotateDown());
-      Faces[original.RotateLeft().Y] = Faces[original.RotateLeft().Y].GridFlipHorizontal();
-      Faces[original.RotateRight().Y] = Faces[original.RotateRight().Y].GridFlipHorizontal();
+      Faces[original.Y] = Faces[original.Y].GridRotateRight();
+      Faces[original.RotateLeft().Y] = Faces[original.RotateLeft().Y].GridRotateRight();
+      Faces[original.RotateLeft().RotateLeft().Y] = Faces[original.RotateLeft().RotateLeft().Y].GridRotateRight();
+      Faces[original.RotateLeft().RotateLeft().RotateLeft().Y] = Faces[original.RotateLeft().RotateLeft().RotateLeft().Y].GridRotateRight();
 
       return this;
     }
@@ -248,7 +235,7 @@ public class Problem20
       PrintGrid(Facing.RotateUp());
     }
 
-    public void Absorb(long value)
+    private void Absorb(long value)
     {
       Absorptions[Facing.Y] += value;
     }

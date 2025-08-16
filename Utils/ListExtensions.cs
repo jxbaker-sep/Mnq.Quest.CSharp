@@ -44,6 +44,8 @@ public static class ListExtensions
     return o;
   }
 
+  public static List<List<T>> GridRotate180<T>(this List<List<T>> self) => self.GridRotateLeft().GridRotateLeft();
+
   public static List<List<T>> GridRotateLeft<T>(this List<List<T>> self)
   {
     // precondition: self has x and y coordiates the same
