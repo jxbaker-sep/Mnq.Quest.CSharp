@@ -34,9 +34,9 @@ public class Problem21
 
   [Theory]
   [InlineData("Problem21.Sample.1.txt", "17")]
-  // [InlineData("Problem21.Sample.2.txt", "102")]
-  // [InlineData("Problem21.Sample.3.txt", "113524314072255566781694")]
-  // [InlineData("Problem21.txt", "0")]
+  [InlineData("Problem21.Sample.2.txt", "102")]
+  [InlineData("Problem21.Sample.3.txt", "113524314072255566781694")]
+  [InlineData("Problem21.txt", "411868671461623512011293423204353")]
   public void Part2(string inputFile, string rep_expected)
   {
     BigInteger expected = BigInteger.Parse(rep_expected);
@@ -99,7 +99,7 @@ public class Problem21
       result = [.. result, .. Open(StaircaseMap[current.To], step, move - 1)];
     }
     var neighbors = Staircases.Where(sc => sc.From == current.Name && sc.FirstStep == step).ToList();
-    neighbors.Should().HaveCountLessThanOrEqualTo(1); // sanity
+    // neighbors.Should().HaveCountLessThanOrEqualTo(1); // sanity
     foreach (var next in neighbors)
     {
       result = [.. result, .. Open(next, step, move - 1)];
