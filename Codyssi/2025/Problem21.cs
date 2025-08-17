@@ -72,17 +72,14 @@ public class Problem21
   [InlineData("Problem21.Sample.2.txt", "100000000000000000000000000000", "S1_0-S1_2-S2_3-S3_4-S3_5-S1_6")]
   [InlineData("Problem21.Sample.3.txt", "73287437832782344", "S1_0-S1_1-S1_2-S1_3-S1_4-S1_5-S1_6-S1_7-S1_8-S1_9-S1_10-S1_11-S1_12-S1_13-S1_14-S1_15-S1_16-S1_17-S1_18-S1_19-S1_20-S1_21-S1_22-S1_23-S1_24-S1_25-S1_26-S1_29-S5_29-S5_30-S5_35-S5_36-S5_37-S5_38-S5_39-S5_40-S5_45-S5_46-S5_47-S5_48-S5_51-S5_52-S5_53-S5_54-S5_55-S5_58-S5_59-S5_62-S5_63-S5_64-S5_65-S5_66-S5_67-S5_70-S5_71-S5_72-S1_76-S1_79-S1_80-S3_84-S3_85-S3_86-S3_87-S3_90-S1_92-S1_93-S1_94-S1_95-S1_98-S1_99")]
   [InlineData("Problem21.Sample.3.txt", "100000000000000000000000000000", "S1_0-S1_6-S2_11-S2_17-S2_23-S2_29-S9_34-S9_37-S5_42-S5_48-S5_54-S5_60-S5_66-S5_72-S5_73-S5_74-S1_79-S3_84-S8_88-S8_89-S8_90-S3_90-S3_91-S1_96-S1_99")]
-  [InlineData("Problem21.txt", "100000000000000000000000000000", "")]
-  // Incorrect:
-  // f2-aa-3e-d4-29-96-94-5a-53-72-91-73-63-ec-7a-66
-  // S1_0-S1_1-S1_2-S1_3-S1_4-S1_5-S1_6-S1_7-S1_8-S1_9-S1_10-S1_11-S1_12-S55_13-S55_15-S55_16-S55_17-S55_18-S1_19-S5_25-S1_31-S1_32-S1_33-S1_35-S10_37-S32_44-S32_47-S22_48-S22_51-S14_53-S14_54-S14_55-S14_56-S14_57-S2_57-S2_58-S2_60-S2_61-S2_62-S2_63-S6_64-S6_66-S6_68-S19_69-S19_70-S19_71-S19_72-S19_73-S19_74-S19_75-S19_77-S19_79-S43_80-S43_81-S43_82-S78_83-S78_84-S78_85-S147_85-S147_87-S147_88-S6_88-S6_91-S4_91-S4_92-S4_93-S4_94-S1_96-S1_97
+  [InlineData("Problem21.txt", "100000000000000000000000000000", "S1_0-S1_1-S1_2-S1_3-S1_4-S1_5-S1_6-S1_7-S1_8-S1_9-S1_10-S1_11-S1_12-S55_13-S55_15-S55_16-S55_17-S55_18-S1_19-S1_22-S5_22-S5_23-S5_24-S5_25-S1_26-S1_27-S1_30-S1_32-S1_33-S1_36-S11_38-S11_39-S11_40-S11_41-S11_43-S11_45-S11_53-S11_54-S11_56-S11_57-S11_59-S11_61-S84_61-S84_62-S84_63-S84_64-S84_65-S84_66-S84_68-S30_70-S30_71-S11_71-S11_72-S11_73-S11_74-S67_80-S67_81-S67_83-S67_84-S67_86-S67_88-S67_89-S67_90-S67_91-S48_93-S48_94-S47_94-S47_95-S1_97")]
   public void Part3(string inputFile, string goal_rank_exp, string expected)
   {
     var goal_rank = BigInteger.Parse(goal_rank_exp);
     GetInput(inputFile);
     ComputeNumberOfPaths(Staircases[0], 0);
     var it = FindRank(Staircases[0], 0, 0, goal_rank);
-    it.Should().Be(expected, $"{CalculateMD5(it)}");
+    it.Should().Be(expected);
   }
 
   string FindRank(Staircase current, long step, BigInteger startingRank, BigInteger goalRank)
@@ -95,7 +92,7 @@ public class Problem21
         hashed_children.Add((nextStaircase, nextStep));
       }
     }
-    var children = hashed_children.OrderBy(it => it.nextStaircase.Name).ThenBy(it => it.nextStep).ToList();
+    var children = hashed_children.OrderBy(it => it.nextStaircase.Id).ThenBy(it => it.nextStep).ToList();
     string needle = "";
     foreach (var (nextStaircase, nextStep) in children)
     {
@@ -182,14 +179,17 @@ public class Problem21
     return result;
   }
 
-  public record Staircase(string Name, long FirstStep, long LastStep, string From, string To);
+  public record Staircase(long Id, long FirstStep, long LastStep, string From, string To)
+  {
+    public string Name => $"S{Id}";
+  }
 
   private void GetInput(string inputFile)
   {
     var pps = CodyssiLoader.ReadAllText(inputFile).Paragraphs();
     var word = (P.Letter | P.Digit).Star().Join();
-    var parser = P.Format("{} : {} -> {} : FROM {} TO {}",
-      word, P.Long, P.Long, word, word)
+    var parser = P.Format("S{} : {} -> {} : FROM {} TO {}",
+      P.Int, P.Long, P.Long, word, word)
       .Select(it => new Staircase(it.First, it.Second, it.Third, it.Fourth, it.Fifth));
 
     Staircases = parser.ParseMany(pps[0]);
