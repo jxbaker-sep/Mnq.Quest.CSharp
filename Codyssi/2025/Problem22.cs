@@ -23,48 +23,65 @@ public class Problem22
 
   [Theory]
   [InlineData("Problem22.Sample.1.txt", 3, 3, 5, 23)]
-  // [InlineData("Problem22.Sample.2.txt", 10, 15, 60, 32545)]
-  // [InlineData("Problem22.txt", 10, 15, 60, 32422)]
+  [InlineData("Problem22.Sample.2.txt", 10, 15, 60, 217)]
+  [InlineData("Problem22.txt", 10, 15, 60, 206)]
   public void Part2(string inputFile, long maxX, long maxY, long maxZ, int expected)
   {
     var input = GetInput(inputFile);
-    FindPath(input, maxX, maxY, maxZ).Should().Be(expected);
+    FindPath(input, maxX, maxY, maxZ, 1).Should().Be(expected);
   }
 
-  private static long FindPath(List<Rule> input, long maxX, long maxY, long maxZ)
+  [Theory]
+  [InlineData("Problem22.Sample.1.txt", 3, 3, 5, 8)]
+  [InlineData("Problem22.Sample.2.txt", 10, 15, 60, 166)]
+  [InlineData("Problem22.txt", 10, 15, 60, 170)]
+  public void Part3(string inputFile, long maxX, long maxY, long maxZ, int expected)
+  {
+    var input = GetInput(inputFile);
+    FindPath(input, maxX, maxY, maxZ, 4).Should().Be(expected);
+  }
+
+  private static long FindPath(List<Rule> input, long maxX, long maxY, long maxZ, int MaxHits)
   {
     var debris = input.SelectMany(it => Find(it, [maxX, maxY, maxZ])).ToList();
 
     List<List<Debris>> debrisAtTimestamp = [];
-    List<HashSet<Point4>> occupiedAtTimestamp = [];
+    List<Dictionary<Point4, int>> occupiedAtTimestamp = [];
     debrisAtTimestamp.Add([.. debris]);
-    occupiedAtTimestamp.Add([.. debris.Select(it => it.Position)]);
+    occupiedAtTimestamp.Add(debris.Select(it => it.Position).GroupToCounts());
 
     Point4 goal = new(maxX - 1, maxY - 1, maxZ - 1, 0);
     
-    PriorityQueue<(Point4 Position, int Seconds)> open = new(a => a.Seconds + goal.ManhattanDistance(a.Position));
+    PriorityQueue<(Point4 Position, int Seconds, int Hits)> open = new(a => a.Seconds + goal.ManhattanDistance(a.Position));
 
-    open.Enqueue((Point4.Zero, 0));
+    open.Enqueue((Point4.Zero, 0, 0));
     List<long> limits = [maxX, maxY, maxZ];
+    Dictionary<(Point4 Position, int Seconds), int> closed = [];
+    closed[(Point4.Zero, 0)] = 0;
 
     while (open.TryDequeue(out var current))
     {
+      if (closed[(current.Position, current.Seconds)] < current.Hits) continue;
       var nextTimestamp = current.Seconds + 1;
       if (nextTimestamp >= debrisAtTimestamp.Count)
       {
         debrisAtTimestamp.Add(debrisAtTimestamp[^1].Select(a => a.Move(limits)).ToList());
-        occupiedAtTimestamp.Add([.. debrisAtTimestamp[^1].Select(it => it.Position)]);
+        occupiedAtTimestamp.Add(debrisAtTimestamp[^1].Select(it => it.Position).GroupToCounts());
       }
-      foreach(var next in Neighbors(current.Position, occupiedAtTimestamp[nextTimestamp], limits))
+      foreach(var (next, nextHits) in Neighbors(current.Position, occupiedAtTimestamp[nextTimestamp], limits))
       {
+        if (current.Hits + nextHits >= MaxHits) continue;
         if (next == goal) return nextTimestamp;
+        if (closed.TryGetValue((next, nextTimestamp), out var previous) && previous <= current.Hits + nextHits) continue;
+        closed[(next, nextTimestamp)] = current.Hits + nextHits;
+        open.Enqueue((next, nextTimestamp, current.Hits + nextHits));
       }
     }
 
     throw new ApplicationException();
   }
 
-  static IEnumerable<Point4> Neighbors(Point4 position, HashSet<Point4> debris, List<long> limits)
+  static IEnumerable<(Point4, int)> Neighbors(Point4 position, Dictionary<Point4, int> debris, List<long> limits)
   {
     foreach(var delta in new[]{ 
       new Point4(1,0,0,0),
@@ -73,8 +90,6 @@ public class Problem22
       new Point4(0,-1,0,0),
       new Point4(0,0,1,0),
       new Point4(0,0,-1,0),
-      new Point4(0,0,0,1),
-      new Point4(0,0,0,-1),
       new Point4(0,0,0,0),
     })
     {
@@ -82,8 +97,10 @@ public class Problem22
       if (next.X < 0 || next.X >= limits[0]) continue;
       if (next.Y < 0 || next.Y >= limits[1]) continue;
       if (next.Z < 0 || next.Z >= limits[2]) continue;
-      if (next.W < -1 || next.W > 1) continue;
-      if (next == Point4.Zero || !debris.Contains(next)) yield return next;
+      if (next == Point4.Zero) {
+        yield return (next, 0);
+      }
+      yield return (next, debris.GetValueOrDefault(next));
     }
   }
 

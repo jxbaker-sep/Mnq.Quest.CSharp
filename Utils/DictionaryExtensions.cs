@@ -15,9 +15,9 @@ public static class DictionaryExtensions
     return self.GroupBy(it => key(it), it => value(it)).ToDictionary(it => it.Key, it => it.ToList());
   }
 
-  public static Dictionary<T1, long> GroupToCounts<T1>(this IEnumerable<T1> self)
+  public static Dictionary<T1, int> GroupToCounts<T1>(this IEnumerable<T1> self)
   {
-    return self.GroupBy(it => it, it => it).ToDictionary(it => it.Key, it => (long)it.Count());
+    return self.GroupBy(it => it, it => it).ToDictionary(it => it.Key, it => it.Count());
   }
 }
 #pragma warning restore CS8714
