@@ -119,16 +119,13 @@ public class Problem21
   }
 
   private readonly Dictionary<string, BigInteger> PathCache = [];
-  // private readonly Dictionary<string, List<string>> Paths = [];
   BigInteger ComputeNumberOfPaths(Staircase current, long step)
   {
     var key = $"{current.Name}_{step}";
     if (PathCache.TryGetValue(key, out var needle)) return needle;
-    // Paths[key] = Paths.GetValueOrDefault(key) ?? [];
     if (current.To == "END" && step == current.LastStep)
     {
       PathCache[key] = 1;
-      // Paths[key].Add(key);
       return 1;
     }
 
@@ -141,10 +138,8 @@ public class Problem21
         if (!closed.Add($"{nextStaircase}_{nextStep}")) continue;
         var temp = ComputeNumberOfPaths(nextStaircase, nextStep);
         total += ComputeNumberOfPaths(nextStaircase, nextStep);
-        // Paths[key].AddRange(Paths[$"{nextStaircase.Name}_{nextStep}"].Select(it => $"{key}->{it}"));
       }
     }
-    // Console.WriteLine($"{current.Name} {step} = {total}");
 
     PathCache[key] = total;
     return total;
@@ -170,7 +165,6 @@ public class Problem21
       result = [.. result, .. Open(StaircaseMap[current.To], step, move - 1)];
     }
     var neighbors = Staircases.Where(sc => sc.From == current.Name && sc.FirstStep == step).ToList();
-    // neighbors.Should().HaveCountLessThanOrEqualTo(1); // sanity
     foreach (var next in neighbors)
     {
       result = [.. result, .. Open(next, step, move - 1)];

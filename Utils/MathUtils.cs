@@ -2,6 +2,12 @@ namespace Mng.Quest.CSharp.Utils;
 
 public static class MathUtils
 {
+  public static long MathMod(long numerator, long denominator)
+  {
+    var result = numerator % denominator;
+    return (result < 0) ? denominator + result : result;
+  }
+
   public static long Triangle(long x) => x * (x + 1) / 2;
   
   public static long TriangleAllowNegatives(long x) => x >= 0 ? Triangle(x) : -Triangle(Math.Abs(x));
