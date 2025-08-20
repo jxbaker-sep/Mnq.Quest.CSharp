@@ -43,45 +43,34 @@ public class Problem22
 
   private static long FindPath(List<Rule> input, long maxX, long maxY, long maxZ, int MaxHits)
   {
-    var debris = input.SelectMany(it => Find(it, [maxX, maxY, maxZ])).ToList();
-
-    List<List<Debris>> debrisAtTimestamp = [];
-    List<Dictionary<Point4, int>> occupiedAtTimestamp = [];
-    debrisAtTimestamp.Add([.. debris]);
-    occupiedAtTimestamp.Add(debris.Select(it => it.Position).GroupToCounts());
-
-    Point4 goal = new(maxX - 1, maxY - 1, maxZ - 1, 0);
-    
-    PriorityQueue<(Point4 Position, int Seconds, int Hits)> open = new(a => a.Seconds + goal.ManhattanDistance(a.Position));
-
-    open.Enqueue((Point4.Zero, 0, 0));
     List<long> limits = [maxX, maxY, maxZ];
-    Dictionary<(Point4 Position, int Seconds), int> closed = [];
-    closed[(Point4.Zero, 0)] = 0;
+    var debris = input.SelectMany(it => Find(it, [maxX, maxY, maxZ])).ToList();
+    Point4 goal = new(maxX - 1, maxY - 1, maxZ - 1, 0);
+    Dictionary<Point4, int> previous = [];
+    previous[Point4.Zero] = 0;
 
-    while (open.TryDequeue(out var current))
+    for (var seconds = 1; seconds < 500; seconds++)
     {
-      if (closed[(current.Position, current.Seconds)] < current.Hits) continue;
-      var nextTimestamp = current.Seconds + 1;
-      if (nextTimestamp >= debrisAtTimestamp.Count)
+      debris = debris.Select(it => it.Move(limits)).ToList();
+      var occupied = debris.Select(it => it.Position).GroupToCounts();
+      Dictionary<Point4, int> current = [];
+      foreach(var (position, hits) in previous)
       {
-        debrisAtTimestamp.Add(debrisAtTimestamp[^1].Select(a => a.Move(limits)).ToList());
-        occupiedAtTimestamp.Add(debrisAtTimestamp[^1].Select(it => it.Position).GroupToCounts());
+        foreach(var (neighbor, nextHits) in Neighbors(position, occupied, limits))
+        {
+          if (hits + nextHits >= MaxHits) continue;
+          if (neighbor == goal) return seconds;
+          if (current.TryGetValue(neighbor, out var existing) && existing < hits + nextHits) continue;
+          current[neighbor] = hits + nextHits;
+        }
       }
-      foreach(var (next, nextHits) in Neighbors(current.Position, occupiedAtTimestamp[nextTimestamp], limits))
-      {
-        if (current.Hits + nextHits >= MaxHits) continue;
-        if (next == goal) return nextTimestamp;
-        if (closed.TryGetValue((next, nextTimestamp), out var previous) && previous <= current.Hits + nextHits) continue;
-        closed[(next, nextTimestamp)] = current.Hits + nextHits;
-        open.Enqueue((next, nextTimestamp, current.Hits + nextHits));
-      }
+      previous = current;
     }
 
     throw new ApplicationException();
   }
 
-  static IEnumerable<(Point4, int)> Neighbors(Point4 position, Dictionary<Point4, int> debris, List<long> limits)
+  static IEnumerable<(Point4, int)> Neighbors(Point4 position, Dictionary<Point4, int> occupied, List<long> limits)
   {
     foreach(var delta in new[]{ 
       new Point4(1,0,0,0),
@@ -100,7 +89,7 @@ public class Problem22
       if (next == Point4.Zero) {
         yield return (next, 0);
       }
-      yield return (next, debris.GetValueOrDefault(next));
+      yield return (next, occupied.GetValueOrDefault(next));
     }
   }
 
