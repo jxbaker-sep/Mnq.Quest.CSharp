@@ -1,5 +1,13 @@
 namespace Utils;
 
+public enum InGroupsOfRemainderAction
+{
+  Exception,
+  Ignore,
+  Keep
+}
+
+
 public static class EnumerableExtensions
 {
   public static long Product(this IEnumerable<long> self) => self.Aggregate(1L, (a,b) => a * b);
@@ -15,6 +23,29 @@ public static class EnumerableExtensions
       q.Enqueue(item);
       if (q.Count > size) q.Dequeue();
       if (q.Count == size) yield return q.ToList();
+    }
+  }
+
+
+  public static IEnumerable<List<T>> InGroupsOf<T>(this IEnumerable<T> self, int size, InGroupsOfRemainderAction action = InGroupsOfRemainderAction.Exception)
+  {
+    if (size <= 0) throw new ApplicationException("What are you doing?");
+    List<T> result = [];
+    foreach (var item in self)
+    {
+      result.Add(item);
+      if (result.Count == size)
+      {
+        yield return result.ToList();
+        result = [];
+      }
+    }
+    if (result.Count > 0)
+    {
+      if (action == InGroupsOfRemainderAction.Exception)
+        throw new ApplicationException("Uneven groups");
+      if (action == InGroupsOfRemainderAction.Keep)
+        yield return result;
     }
   }
 
