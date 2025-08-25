@@ -19,25 +19,60 @@ public class Quest05
   public void Part1(string inputFile, long expected)
   {
     var columns = GetInput(inputFile);
-    for (var turn = 0; turn < 10; turn++)
-    {
-      var selected = turn % 4;
-      var next = columns[(selected + 1) % 4];
-      var clapper = columns[selected].First();
-      columns[selected].RemoveFirst();
+    for(var i = 0 ; i < 10; i++) Dance(columns, i);
 
-      if (clapper <= next.Count)
-      {
-        next.AddBefore(next.Nodes().Take((int)clapper).Last(), clapper);
-      }
-      else 
-      {
-        next.AddAfter(next.Nodes().Take(2 * next.Count - (int)clapper).Last(), clapper);
+    Shout(columns)
+      .Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Quest05.Sample.2.txt", 50877075)]
+  [InlineData("Quest05.2.txt", 17089733162436)]
+  public void Part2(string inputFile, long expected)
+  {
+    var columns = GetInput(inputFile);
+
+    Dictionary<long, long> cache = [];
+
+    for (long turn = 0; ; turn++)
+    {
+      var current = Dance(columns, turn);
+      cache[current] = cache.GetValueOrDefault(current) + 1;
+      if (cache[current] == 2024) {
+        ((turn + 1) * current).Should().Be(expected);
+        return;
       }
     }
 
-    columns.Select(it => it.First!.Value).Aggregate((a, b) => a * 10 + b)
-      .Should().Be(expected);
+    throw new ApplicationException();
+  }
+
+  private long Shout(List<LinkedList<long>> columns)
+  {
+    return Convert.ToInt64(columns.Select(it => $"{it.First!.Value}").Join());
+  }
+
+  private long Dance(List<LinkedList<long>> columns, long turn)
+  {
+    int selected = (int)(turn % 4);
+    var next = columns[(selected + 1) % 4];
+    var clapper = columns[selected].First();
+    columns[selected].RemoveFirst();
+
+    var nodes = next.Nodes().Concat(next.Nodes().Reverse()).ToList();
+
+    int index = (int)((clapper - 1) % nodes.Count());
+
+    if (index < next.Count)
+    {
+      next.AddBefore(nodes.Skip(index).First(), clapper);
+    }
+    else 
+    {
+      next.AddAfter(nodes.Skip(index).First(), clapper);
+    }
+
+    return Shout(columns);
   }
 
   private static List<LinkedList<long>> GetInput(string inputFile)
