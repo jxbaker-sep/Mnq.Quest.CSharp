@@ -15,8 +15,22 @@ public class Quest03
 {
   [Theory]
   [InlineData("Quest03.Sample.1.txt", 35)]
-  [InlineData("Quest03.1.txt", 0)]
+  [InlineData("Quest03.1.txt", 134)]
   public void Part1(string inputFile, long expected)
+  {
+    var input = GetInput(inputFile);
+    long sum = 0;
+    while (true) {
+      var value = Dig(input);
+      if (value == 0) break;
+      sum += value;
+    }
+    sum.Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Quest03.2.txt", 0)]
+  public void Part2(string inputFile, long expected)
   {
     var input = GetInput(inputFile);
     long sum = 0;
