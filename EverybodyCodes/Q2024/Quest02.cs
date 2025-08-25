@@ -29,29 +29,19 @@ public class Quest02
   {
     var input = GetInput(inputFile);
     int sum = 0;
+    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join())];
     foreach (var inscription in input.Inscription)
     {
-      var b = inscription.Select(_ => false).ToList();
-      foreach (var rune in input.Runes)
+      List<int> b = [];
+      foreach (var rune in allRunes)
       {
         foreach (var index in FindAllIndexes(inscription, rune))
         {
-          for (var i = index; i < index + rune.Length; i++)
-          {
-            b[i] = true;
-          }
-        }
-
-        foreach (var index in FindAllIndexes(inscription.Reverse().Join(), rune))
-        {
-          for (var i = index; i < index + rune.Length; i++)
-          {
-            b[inscription.Length - i - 1] = true;
-          }
+          b.AddRange(Enumerable.Range(index, rune.Length));
         }
       }
 
-      sum += b.Count(it => it);
+      sum += b.Distinct().Count();
     }
 
     sum.Should().Be(expected);
@@ -65,34 +55,31 @@ public class Quest02
     var input = GetInput(inputFile);
     var grid = input.Inscription.Gridify();
 
-    Dictionary<char, Thread>
+    Lexicon wordhoard = new();
 
-    var d = input.Runes.GroupToDictionary(it => it[0]);
-    foreach(var item in input.Runes)
+    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join())];
+    foreach (var rune in allRunes)
     {
-      var r = item.Reverse().Join();
-      d[item[^1]] = d.GetValueOrDefault(item[^1]) ?? [];
-      d[item[^1]].Add(r);
+      wordhoard.Add(rune);
     }
+
     HashSet<Point> runicScales = [];
     foreach (var (key, value) in grid.Items())
     {
-      if (!d.TryGetValue(value, out var currentRuneList)) continue;
-      var max = currentRuneList.Max(it => it.Length);
+      // Console.WriteLine(key);
       foreach (var vector in new[] { Vector.East, Vector.South })
       {
-        var needle = "";
-        HashSet<Point> found = [];
+        HashSet<Point> path = [key];
         var current = key;
+        var root = wordhoard.Follow(value);
 
-        for (var i = 0; i < max; i++)
+        while (root is {})
         {
-          needle += grid[current];
-          found.Add(current);
-          if (currentRuneList.Contains(needle))
+          if (root.IsWord)
           {
-            runicScales = [.. runicScales, .. found];
+            runicScales.UnionWith(path);
           }
+
           current += vector;
           if (!grid.Contains(current))
           {
@@ -102,8 +89,9 @@ public class Quest02
             }
             else break;
           }
+          path.Add(current);
+          root = root.Follow(grid[current]);
         }
-
       }
     }
 
@@ -125,7 +113,29 @@ public class Quest02
   }
 
 
-  public record Thread(bool Word, Dictionary<char, Thread> Next);
+  public class Lexicon
+  {
+    private readonly Dictionary<char, Lexicon> Next = [];
+
+    public bool IsWord { get; private set; } = false;
+
+    public Lexicon? Follow(char c)
+    {
+      if (Next.TryGetValue(c, out var needle)) return needle;
+      return null;
+    }
+
+    public void Add(string substring, int fromIndex = 0)
+    {
+      if (fromIndex >= substring.Length) {
+        IsWord = true;
+        return;
+      }
+      var next = Next.GetValueOrDefault(substring[fromIndex]) ?? new();
+      Next[substring[fromIndex]] = next;
+      next.Add(substring, fromIndex + 1);
+    }
+  }
 
   public record World(List<string> Runes, List<string> Inscription);
 
