@@ -29,7 +29,7 @@ public class Quest03
   }
 
   [Theory]
-  [InlineData("Quest03.2.txt", 0)]
+  [InlineData("Quest03.2.txt", 2699)]
   public void Part2(string inputFile, long expected)
   {
     var input = GetInput(inputFile);
@@ -42,13 +42,28 @@ public class Quest03
     sum.Should().Be(expected);
   }
 
-  private static long Dig(Dictionary<Point, long> grid)
+  [Theory]
+  [InlineData("Quest03.Sample.3.txt", 29)]
+  [InlineData("Quest03.3.txt", 10322)]
+  public void Part3(string inputFile, long expected)
+  {
+    var input = GetInput(inputFile);
+    long sum = 0;
+    while (true) {
+      var value = Dig(input, true);
+      if (value == 0) break;
+      sum += value;
+    }
+    sum.Should().Be(expected);
+  }
+
+  private static long Dig(Dictionary<Point, long> grid, bool includeDiagonals = false)
   {
     long changes = 0;
 
     foreach(var (point, height) in grid.ToList())
     {
-      if (point.CardinalNeighbors().All(neighbor => grid.GetValueOrDefault(neighbor) >= height))
+      if ((includeDiagonals ? point.CompassRoseNeighbors() : point.CardinalNeighbors()).All(neighbor => grid.GetValueOrDefault(neighbor) >= height))
       {
         grid[point] += 1;
         changes += 1;
