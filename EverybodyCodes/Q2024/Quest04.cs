@@ -11,73 +11,36 @@ using System.Linq.Expressions;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
-public class Quest03
+public class Quest04
 {
   [Theory]
-  [InlineData("Quest03.Sample.1.txt", 35)]
-  [InlineData("Quest03.1.txt", 134)]
+  [InlineData("Quest04.Sample.1.txt", 10)]
+  [InlineData("Quest04.1.txt", 82)]
+  [InlineData("Quest04.2.txt", 894899)]
   public void Part1(string inputFile, long expected)
   {
     var input = GetInput(inputFile);
-    long sum = 0;
-    while (true) {
-      var value = Dig(input);
-      if (value == 0) break;
-      sum += value;
-    }
-    sum.Should().Be(expected);
+    var min = input.Min();
+    input.Sum(it => it - min).Should().Be(expected);
   }
 
   [Theory]
-  [InlineData("Quest03.2.txt", 2699)]
-  public void Part2(string inputFile, long expected)
-  {
-    var input = GetInput(inputFile);
-    long sum = 0;
-    while (true) {
-      var value = Dig(input);
-      if (value == 0) break;
-      sum += value;
-    }
-    sum.Should().Be(expected);
-  }
-
-  [Theory]
-  [InlineData("Quest03.Sample.3.txt", 29)]
-  [InlineData("Quest03.3.txt", 10322)]
+  [InlineData("Quest04.Sample.3.txt", 8)]
+  [InlineData("Quest04.3.txt", 122610071)]
   public void Part3(string inputFile, long expected)
   {
     var input = GetInput(inputFile);
-    long sum = 0;
-    while (true) {
-      var value = Dig(input, true);
-      if (value == 0) break;
-      sum += value;
-    }
-    sum.Should().Be(expected);
-  }
-
-  private static long Dig(Dictionary<Point, long> grid, bool includeDiagonals = false)
-  {
-    long changes = 0;
-
-    foreach(var (point, height) in grid.ToList())
+    var total = long.MaxValue;
+    foreach(var item in input)
     {
-      if ((includeDiagonals ? point.CompassRoseNeighbors() : point.CardinalNeighbors()).All(neighbor => grid.GetValueOrDefault(neighbor) >= height))
-      {
-        grid[point] += 1;
-        changes += 1;
-      }
+      var it2 = input.Sum(it => Math.Abs(it - item));
+      total = Math.Min(total, it2);
     }
-
-    return changes;
+    total.Should().Be(expected);
   }
 
-  private static Dictionary<Point, long> GetInput(string inputFile)
+  private static List<long> GetInput(string inputFile)
   {
-    return ECLoader.ReadLines(inputFile).Gridify()
-      .Items()
-      .Where(it => it.Value == '#')
-      .ToDictionary(it => it.Key, it => 0L);
+    return P.Long.ParseMany(ECLoader.ReadLines(inputFile));
   }
 }
