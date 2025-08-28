@@ -47,29 +47,56 @@ public class Quest05
     throw new ApplicationException();
   }
 
-  private long Shout(List<LinkedList<long>> columns)
+  [Theory]
+  [InlineData("Quest05.Sample.3.txt", 6584)]
+  [InlineData("Quest05.3.txt", 2693100410001002)]
+  public void Part3(string inputFile, long expected)
+  {
+    var columns = GetInput(inputFile);
+
+    Dictionary<string, long> cache = [];
+
+    static string GetKey(List<LinkedList<long>> columns, int turn) => $"{turn}" + 
+      columns.Select(c => c.Select(it => $"{it}").Join(",")).Join(";");
+
+    cache[GetKey(columns, 0)] = 0;
+
+    for (long turn = 0; ;turn++)
+    {
+      var current = Dance(columns, turn);
+      var key = GetKey(columns, (int)(turn + 1) % 4);
+      if (cache.TryGetValue(key, out var needle))
+      {
+        cache.Values.Max().Should().Be(expected);
+        return;
+      }
+      cache[key] = current;
+    }
+
+    throw new ApplicationException();
+  }
+
+  private static long Shout(List<LinkedList<long>> columns)
   {
     return Convert.ToInt64(columns.Select(it => $"{it.First!.Value}").Join());
   }
 
-  private long Dance(List<LinkedList<long>> columns, long turn)
+  private static long Dance(List<LinkedList<long>> columns, long turn)
   {
     int selected = (int)(turn % 4);
     var next = columns[(selected + 1) % 4];
     var clapper = columns[selected].First();
     columns[selected].RemoveFirst();
 
-    var nodes = next.Nodes().Concat(next.Nodes().Reverse()).ToList();
-
-    int index = (int)((clapper - 1) % nodes.Count());
+    int index = (int)(clapper - 1) % (next.Count * 2);
 
     if (index < next.Count)
     {
-      next.AddBefore(nodes.Skip(index).First(), clapper);
+      next.AddBefore(next.Nodes().Skip(index).First(), clapper);
     }
-    else 
+    else
     {
-      next.AddAfter(nodes.Skip(index).First(), clapper);
+      next.AddAfter(next.Nodes().Skip(next.Count * 2 - index - 1).First(), clapper);
     }
 
     return Shout(columns);
