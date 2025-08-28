@@ -32,16 +32,17 @@ public class Quest05
   {
     var columns = GetInput(inputFile);
 
-    Dictionary<long, long> cache = [];
+    Dictionary<long, long> counts = [];
 
     for (long turn = 0; ; turn++)
     {
       var current = Dance(columns, turn);
-      cache[current] = cache.GetValueOrDefault(current) + 1;
-      if (cache[current] == 2024) {
+      var count = counts.GetValueOrDefault(current) + 1;
+      if (count == 2024) {
         ((turn + 1) * current).Should().Be(expected);
         return;
       }
+      counts[current] = count;
     }
 
     throw new ApplicationException();
