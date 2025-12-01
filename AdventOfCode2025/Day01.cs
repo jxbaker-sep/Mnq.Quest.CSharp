@@ -19,9 +19,9 @@ public class Day01
     var count = 0L;
     var dial = 50L;
 
-    foreach (var (First, Second) in data)
+    foreach (var (direction, magnitude) in data)
     {
-      dial += Second * (First == "L" ? -1 : 1);
+      dial += magnitude * (direction == "L" ? -1 : 1);
       dial = MathUtils.MathMod(dial, 100);
       if (dial == 0) count += 1;
     }
@@ -41,26 +41,12 @@ public class Day01
 
     foreach (var (direction, magnitude) in data)
     {
-      if (direction == "L")
+      var clicksToZero = direction == "L" ? dial : 100 - dial;
+      if (clicksToZero != 0 && magnitude >= clicksToZero)
       {
-        var x = magnitude;
-        if (dial != 0 && x >= dial)
-        {
-          count += 1;
-          x -= dial;
-        }
-        count += x / 100;
+        count += 1;
       }
-      else
-      {
-        var x = magnitude;
-        if (x >= (100-dial))
-        {
-          count += 1;
-          x -= 100-dial;
-        }
-        count += x / 100;
-      }
+      count += Math.Max(0, magnitude - clicksToZero) / 100;
       dial += magnitude * (direction == "L" ? -1 : 1);
       dial = MathUtils.MathMod(dial, 100);
     }
