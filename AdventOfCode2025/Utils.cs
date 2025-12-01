@@ -1,8 +1,8 @@
-namespace Mnq.Quest.CSharp.EverybodyCodes;
+namespace Mng.Quest.CSharp.AdventOfCode2025;
 
-public static class ECLoader
+public static class AdventOfCode2025Loader
 {
-  private const string Base = "/Users/jxbaker/dev/Mnq.Quest.CSharp/EverybodyCodes/Q2024/data/";
+  private const string Base = "/Users/jxbaker/dev/Mnq.Quest.CSharp/AdventOfCode2025/data/";
 
   public static List<string> ReadLines(string inputFile) => [.. File.ReadAllLines(Base + inputFile)];
   public static string ReadAllText(string inputFile) => File.ReadAllText(Base + inputFile);

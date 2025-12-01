@@ -339,6 +339,6 @@ public class Program
 
   public void Write(string filename, bool compact = true)
   {
-    File.WriteAllText($"/home/jxbaker@net.sep.com/dev/Mnq.Quest.CSharp/{filename}", Join(compact));
+    File.WriteAllText($"/Users/jxbaker/dev/Mnq.Quest.CSharp/{filename}", Join(compact));
   }
 }
