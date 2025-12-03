@@ -56,12 +56,12 @@ public class Day02
     HashSet<long> closed = [];
     for (var current = first; current <= second; current++)
     {
-      var s = $"{current}";
-      for (int n = 1; n <= s.Length / 2; n++)
+      var currentAsString = $"{current}";
+      for (int substringLength = 1; substringLength <= currentAsString.Length / 2; substringLength++)
       {
-        if (s.Length % n == 0 && s.Length / n > 1)
+        if (currentAsString.Length % substringLength == 0 && currentAsString.Length / substringLength > 1)
         {
-          var f = long.Parse(Enumerable.Repeat(s[..n], s.Length / n).Join(""));
+          var f = long.Parse(Enumerable.Repeat(currentAsString[..substringLength], currentAsString.Length / substringLength).Join(""));
           if (first <= f && f <= second)
           {
             if (closed.Add(f)) yield return f;
