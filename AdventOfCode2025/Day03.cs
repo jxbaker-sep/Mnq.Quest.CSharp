@@ -2,8 +2,6 @@
 using FluentAssertions;
 using P = Parser.ParserBuiltins;
 using Parser;
-using Mng.Quest.CSharp.Utils;
-using System.Data.Common;
 using Utils;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
@@ -36,18 +34,17 @@ public class Day03
     }).Sum().Should().Be(expected);
   }
 
-  long FindMaxJoltage(List<long> line, int take)
+  static long FindMaxJoltage(List<long> line, int take)
   {
-    long current = 0;
+    long joltage = 0;
     var index = 0;
     var withIndexes = line.WithIndices().ToList();
     for (int i = take - 1; i >= 0; i--)
     {
       var j = withIndexes[(index)..(line.Count - i)].MaxBy(it => it.Value);
-      current = current * 10 + j.Value;
+      joltage = joltage * 10 + j.Value;
       index = j.Index + 1;
     }
-    return current;
+    return joltage;
   }
-
 }
