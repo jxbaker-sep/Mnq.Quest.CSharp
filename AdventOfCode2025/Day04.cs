@@ -1,10 +1,7 @@
 
 using FluentAssertions;
-using P = Parser.ParserBuiltins;
 using Parser;
-using Utils;
 using Mng.Quest.CSharp.Utils;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.ObjectModel;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 
@@ -30,7 +27,7 @@ public class Day04
   [Theory]
   [InlineData("Day04.Sample.txt", 43)]
   [InlineData("Day04.txt", 8484)]
-  public void Part2(string inputFile, long expected)
+  public void Part2ViaBF(string inputFile, long expected)
   {
     var grid = AdventOfCode2025Loader.ReadLines(inputFile).Gridify();
     var start = grid.Items().Count(it => it.Value == '@');
@@ -45,7 +42,31 @@ public class Day04
         }
       }
       if (candidates.Count == 0) break;
-      foreach(var p in candidates) grid[p] = '.';
+      foreach (var p in candidates) grid[p] = '.';
+    }
+    var final = grid.Items().Count(it => it.Value == '@');
+    (start - final).Should().Be((int)expected);
+  }
+
+  [Theory]
+  [InlineData("Day04.Sample.txt", 43)]
+  [InlineData("Day04.txt", 8484)]
+  public void Part2ViaForces(string inputFile, long expected)
+  {
+    var grid = AdventOfCode2025Loader.ReadLines(inputFile).Gridify();
+    var start = grid.Items().Count(it => it.Value == '@');
+    var forces = grid.Points().ToDictionary(p => p, p => p.CompassRoseNeighbors().Count(n => grid.Get(n, '.') == '@'));
+
+    Queue<Point> open = new([.. forces.Where(it => it.Value < 4 && grid.Get(it.Key, '.')  == '@').Select(it => it.Key)]);
+
+    while (open.TryDequeue(out var current))
+    {
+      grid[current] = '.';
+      foreach (var n in current.CompassRoseNeighbors().Where(forces.ContainsKey))
+      {
+        forces[n] = forces[n] - 1;
+        if (forces[n] == 3 && grid.Get(n, '.') == '@') open.Enqueue(n);
+      }
     }
     var final = grid.Items().Count(it => it.Value == '@');
     (start - final).Should().Be((int)expected);

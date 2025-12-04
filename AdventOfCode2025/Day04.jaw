@@ -1,0 +1,31 @@
+// type string = char[]
+
+// type Os
+//    ReadLines: function(inputFile: string): string[]
+// end
+
+function ReadLines(inputFile: string): string[]
+    let base = "/Users/jxbaker/dev/Mnq.Quest.CSharp/AdventOfCode2025/data/"
+    os.readLines base + inputFile
+end
+
+function Part1(inputFile: string, expected: number)
+    let lines = readLines(inputFile)
+    
+    
+end
+
+type Point 
+    X: number
+    Y: number
+end
+
+function neighbors(p: Point): *point
+    for dx in [-1, 0, 1]
+        for dy in [-1, 0, 1]
+            if dx is not 0 or dy is not 0
+                yield { X: p.X + dx, Y: p.Y + dy }
+            end            
+        end
+    end
+end

@@ -3,8 +3,8 @@ namespace Mng.Quest.CSharp.Utils;
 public class Grid<T>
 {
   private readonly List<List<T>> Actual;
-  public long Width{get; init;}
-  public long Height{get; init;}
+  public long Width { get; init; }
+  public long Height { get; init; }
   public long Count => Width * Height;
 
   public Grid(IEnumerable<IEnumerable<T>> input)
@@ -22,6 +22,12 @@ public class Grid<T>
 
   public bool Contains(Point p) => 0 <= p.Y && p.Y < Height && 0 <= p.X && p.X < Width;
 
+  public T Get(Point p, T deflt)
+  {
+    if (Contains(p)) return this[p];
+    return deflt;
+  }
+
   public bool TryGetValue(Point p, out T output)
   {
     if (Contains(p))
@@ -33,7 +39,7 @@ public class Grid<T>
     return false;
   }
 
-  public IEnumerable<Point> Points() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => new Point(x,y)));
-  
-  public IEnumerable<(Point Key, T Value)> Items() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => (Key: new Point(x,y), Value: this[new Point(x,y)])));
+  public IEnumerable<Point> Points() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => new Point(x, y)));
+
+  public IEnumerable<(Point Key, T Value)> Items() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => (Key: new Point(x, y), Value: this[new Point(x, y)])));
 }
