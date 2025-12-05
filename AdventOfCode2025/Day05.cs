@@ -38,21 +38,21 @@ public class Day05
 
     while (open.TryDequeue(out var current))
     {
-      bool anyCombined = false;
-
-      for (var link = closed.First; link != null; link = link!.Next)
+      var link = closed.First;
+      while (link != null)
       {
         var combined = TryCombineRanges(current, link.Value);
         if (combined is { } c)
         {
           var temp = link;
-          open.Enqueue(c);
+          link = link.Next;
+          current = c;
           closed.Remove(temp);
-          anyCombined = true;
-          break;
+          continue;
         }
+        link = link.Next;
       }
-      if (!anyCombined) closed.AddLast(current);
+      closed.AddLast(current);
     }
 
 
@@ -62,9 +62,7 @@ public class Day05
   static (long first, long second)? TryCombineRanges((long first, long second) one, (long first, long second) two)
   {
     if ((two.first <= one.first && one.first <= two.second) ||
-        (two.first <= one.second && one.second <= two.second) ||
-        (one.first <= two.first && two.first <= one.second) ||
-        (one.first <= two.second && two.second <= one.second)
+        (one.first <= two.first && two.first <= one.second)
     )
     {
       return (Math.Min(one.first, two.first), Math.Max(one.second, two.second));
