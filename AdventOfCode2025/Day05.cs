@@ -39,20 +39,18 @@ public class Day05
     while (open.TryDequeue(out var current))
     {
       bool anyCombined = false;
-      var first = closed.First;
-      while (first != null)
+
+      for (var link = closed.First; link != null; link = link!.Next)
       {
-        var combined = TryCombineRanges(current, first.Value);
-        if (combined is {} c)
+        var combined = TryCombineRanges(current, link.Value);
+        if (combined is { } c)
         {
-          var temp = first;
-          first = first.Next;
+          var temp = link;
           open.Enqueue(c);
           closed.Remove(temp);
           anyCombined = true;
-          continue;
+          break;
         }
-        first = first.Next;
       }
       if (!anyCombined) closed.AddLast(current);
     }
@@ -61,7 +59,7 @@ public class Day05
     closed.Sum(it => it.second - it.first + 1).Should().Be(expected);
   }
 
-  (long first, long second)? TryCombineRanges((long first, long second) one, (long first, long second) two)
+  static (long first, long second)? TryCombineRanges((long first, long second) one, (long first, long second) two)
   {
     if ((two.first <= one.first && one.first <= two.second) ||
         (two.first <= one.second && one.second <= two.second) ||
