@@ -49,12 +49,12 @@ public static class ListExtensions
   public static List<List<T>> GridRotateLeft<T>(this List<List<T>> self)
   {
     // precondition: self has x and y coordiates the same
-    var o = self.Clone();
+    var o = Enumerable.Range(0, self[0].Count).Select(it => Enumerable.Range(0, self.Count).Select(_ => self[0][0]).ToList()).ToList();
     for (var y = 0; y < self.Count; y++)
     {
-      for (var x = 0; x < self.Count; x++)
+      for (var x = 0; x < self[0].Count; x++)
       {
-        var p = new Point(y, self.Count - x - 1);
+        var p = new Point(y, self[0].Count - x - 1);
         o.Set(p, self[y][x]);
       }
     }

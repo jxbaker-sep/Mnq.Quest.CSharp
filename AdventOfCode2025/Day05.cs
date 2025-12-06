@@ -3,6 +3,7 @@ using FluentAssertions;
 using P = Parser.ParserBuiltins;
 using Parser;
 using Mng.Quest.CSharp.Utils;
+using System.Runtime.CompilerServices;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 
@@ -33,11 +34,11 @@ public class Day05
 
     var ranges = P.Format("{}-{}", P.Long, P.Long).End().ParseMany(pps[0]);
 
-    Queue<(long first, long second)> open = new([.. ranges]);
     LinkedList<(long first, long second)> closed = [];
 
-    while (open.TryDequeue(out var current))
+    foreach (var range in ranges)
     {
+      var current = range;
       var link = closed.First;
       while (link != null)
       {
