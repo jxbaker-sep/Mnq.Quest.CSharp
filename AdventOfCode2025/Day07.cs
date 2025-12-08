@@ -43,7 +43,7 @@ public class Day07
 
   [Theory]
   [InlineData("Day07.Sample.txt", 40)]
-  [InlineData("Day07.txt", 58097428661390)]
+  [InlineData("Day07.txt", 58_097_428_661_390)]
   public void Part2(string inputFile, long expected)
   {
     var grid = AdventOfCode2025Loader.ReadLines(inputFile).Gridify();
