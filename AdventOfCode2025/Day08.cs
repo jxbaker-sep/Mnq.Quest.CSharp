@@ -49,4 +49,48 @@ public class Day08
     zed.Take(3).Product()
     .Should().Be(expected);
   }
+
+  [Theory]
+  [InlineData("Day08.Sample.txt", 25272)]
+  [InlineData("Day08.txt", 100011612)]
+  public void Part2(string inputFile, long expected)
+  {
+    var grid = P.Long.Star(",").End().Select(it => new Point3(it[0], it[1], it[2]))
+      .ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
+
+    Dictionary<Point3, DisjointSet> sets = [];
+
+    List<(Point3, Point3)> distances = [];
+
+    foreach (var (p1, index) in grid.WithIndices())
+    {
+      foreach (var p2 in grid[(index + 1)..])
+      {
+        distances.Add((p1, p2));
+      }
+    }
+
+    distances = distances.OrderBy(it => it.Item1.StraightLineDistance(it.Item2)).ToList();
+
+    long result = -1;
+    var i = 0;
+    while (true)
+    {
+      var (p1, p2) = distances[i++];
+      var dj1 = sets.GetValueOrDefault(p1, new());
+      var dj2 = sets.GetValueOrDefault(p2, new());
+      dj1.Union(dj2);
+      sets[p1] = dj1.Find();
+      sets[p2] = sets[p1];
+      if (sets.Count == grid.Count &&
+        sets.Select(it => it.Value.Find()).Distinct().Count() == 1)
+      {
+        result = p1.X * p2.X;
+        break;
+      }
+    }
+
+    result
+    .Should().Be(expected);
+  }
 }
