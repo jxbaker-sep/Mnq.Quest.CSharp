@@ -37,8 +37,8 @@ public class Day08
       var dj1 = sets.GetValueOrDefault(p1, new());
       var dj2 = sets.GetValueOrDefault(p2, new());
       dj1.Union(dj2);
-      sets[p1] = dj1.Find();
-      sets[p2] = sets[p1];
+      sets[p1] = dj1;
+      sets[p2] = dj1;
     }
 
     var zed = sets.Values.Select(it => it.Find())
@@ -73,24 +73,23 @@ public class Day08
     distances = distances.OrderBy(it => it.Item1.StraightLineDistance(it.Item2)).ToList();
 
     long result = -1;
-    var i = 0;
-    while (true)
+    long distinct = grid.Count;
+    for (var i = 0; i < distances.Count; i++)
     {
-      var (p1, p2) = distances[i++];
+      var (p1, p2) = distances[i];
       var dj1 = sets.GetValueOrDefault(p1, new());
       var dj2 = sets.GetValueOrDefault(p2, new());
+      if (!dj1.SameUnion(dj2)) distinct -= 1;
       dj1.Union(dj2);
-      sets[p1] = dj1.Find();
-      sets[p2] = sets[p1];
-      if (sets.Count == grid.Count &&
-        sets.Select(it => it.Value.Find()).Distinct().Count() == 1)
+      sets[p1] = dj1;
+      sets[p2] = dj1;
+      if (distinct == 1)
       {
         result = p1.X * p2.X;
         break;
       }
     }
 
-    result
-    .Should().Be(expected);
+    result.Should().Be(expected);
   }
 }
