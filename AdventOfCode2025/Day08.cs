@@ -4,6 +4,7 @@ using P = Parser.ParserBuiltins;
 using Parser;
 using Mng.Quest.CSharp.Utils;
 using Utils;
+using System.Diagnostics;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 
@@ -21,7 +22,9 @@ public class Day08
 
     var pairs = grid.Pairs().ToList();
 
-    pairs = pairs.OrderBy(it => it.Item1.Point.StraightLineDistance(it.Item2.Point)).ToList();
+    pairs = [.. pairs.OrderBy(it => it.First.Point.StraightLineDistance(it.Second.Point))];
+
+    // var pairs = grid.Pairs().OrderBy(it => it.First.Point.StraightLineDistance(it.Second.Point)).ToList();
 
     for (var i = 0; i < connections; i++)
     {
@@ -42,12 +45,15 @@ public class Day08
   [InlineData("Day08.txt", 100011612)]
   public void Part2(string inputFile, long expected)
   {
+    var sw = new Stopwatch();
+    sw.Start();
     var grid = P.Long.Star(",").End().Select(it => new PointWithSet(new Point3(it[0], it[1], it[2]), new DisjointSet()))
       .ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
+    var t0 = sw.ElapsedMilliseconds;
 
-    var pairs = grid.Pairs().ToList();
+    var pairs = grid.Pairs().OrderBy(it => it.First.Point.StraightLineDistance(it.Second.Point)).ToList();
 
-    pairs = pairs.OrderBy(it => it.Item1.Point.StraightLineDistance(it.Item2.Point)).ToList();
+    var t1 = sw.ElapsedMilliseconds;
 
     long result = -1;
     long distinct = grid.Count;
@@ -62,7 +68,8 @@ public class Day08
         break;
       }
     }
-
+    var t2 = sw.ElapsedMilliseconds;
+    Console.WriteLine($"{t0} {t1} {t2}");
     result.Should().Be(expected);
   }
 }
