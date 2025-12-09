@@ -27,92 +27,57 @@ public class Day09
 
   [Theory]
   [InlineData("Day09.Sample.txt", 24)]
-  [InlineData("Day09.txt", 0)]
+  [InlineData("Day09.txt", 0)] // 4634026886 too high
   public void Part2(string inputFile, long expected)
   {
     var points = P.Long.Star(",").End().Select(it => new Point(it[0], it[1]))
       .ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
 
-    HashSet<Point> occupied = [.. points.Windows(2).SelectMany(p => LineBetween(p[0], p[1]))];
-    foreach (var p in LineBetween(points[0], points[^1])) occupied.Add(p);
-    FloodFill(occupied);
-    Console.WriteLine(occupied.Count);
+    var vlines = points.Windows(2).Append([points[0], points[^1]])
+      .Where(it => it[0].X == it[1].X)
+      .Select(it => (top: Math.Min(it[0].Y, it[1].Y), bottom: Math.Max(it[0].Y, it[1].Y), x: it[0].X))
+      .ToList();
 
-    var ps = points.Pairs().ToList();
-    long found = 0;
-    foreach (var (p, index) in ps.WithIndices())
+    var hlines = points.Windows(2).Append([points[0], points[^1]])
+      .Where(it => it[0].Y == it[1].Y)
+      .Select(it => (left: Math.Min(it[0].X, it[1].X), right: Math.Max(it[0].X, it[1].X), y: it[0].Y))
+      .ToList();
+
+    var result = -1L;
+
+    foreach (var pair in points.Pairs())
     {
-      Console.WriteLine($"{index} / {ps.Count}");
-      if (FullOverlap(p.First, p.Second, occupied))
+      var minx = Math.Min(pair.First.X, pair.Second.X);
+      var maxx = Math.Max(pair.First.X, pair.Second.X);
+      var miny = Math.Min(pair.First.Y, pair.Second.Y);
+      var maxy = Math.Max(pair.First.Y, pair.Second.Y);
+      var found = true;
+      foreach (var vertex in new[] { new Point(minx, miny), new Point(minx, maxy), new Point(maxx, miny), new Point(maxx, maxy) })
       {
-        found = Math.Max(found, (Math.Abs(p.First.X - p.Second.X) + 1) * (Math.Abs(p.First.Y - p.Second.Y) + 1));
+        if (!PointInPolygon(vertex, vlines, hlines))
+        {
+          found = false;
+          break;
+        }
+      }
+      if (found) {
+        result = Math.Max(result, (Math.Abs(pair.First.X - pair.Second.X) + 1) * (Math.Abs(pair.First.Y - pair.Second.Y) + 1));
       }
     }
 
-    found.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
-  private static bool FullOverlap(Point first, Point Second, HashSet<Point> grid)
+  private static bool PointInPolygon(Point vertex, List<(long top, long bottom, long x)> vlines, List<(long left, long right, long y)> hlines)
   {
-    return Rectangle(first, Second).All(p => grid.Contains(p));
-  }
+    foreach(var (left, right, y) in hlines) 
+      if (y == vertex.Y && left <= vertex.X && vertex.X <= right)
+        return true;
 
-  private static IEnumerable<Point> Rectangle(Point first, Point second)
-  {
-    HashSet<Point> result = [];
-    for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
-      for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
-        yield return new(x, y);
-  }
+    foreach(var (top, bottom, x) in vlines) 
+      if (x == vertex.X && top <= vertex.Y && vertex.Y <= bottom)
+        return true;
 
-  private static void FloodFill(HashSet<Point> grid)
-  {
-    var minx = grid.Min(p => p.X);
-    var miny = grid.Min(p => p.Y);
-    var maxx = grid.Max(p => p.X);
-    var maxy = grid.Max(p => p.Y);
-    Point outside = new Point(minx - 1, miny + 1);
-    while (!grid.Contains(outside))
-    {
-      if (outside.X > maxx) throw new ApplicationException();
-      outside += Vector.East;
-    }
-    // we're on a line; move one more east
-    outside += Vector.East;
-
-    Queue<Point> open = new([outside]);
-    while (open.TryDequeue(out var current))
-    {
-      if (current.X < minx || current.X > maxx || current.Y < miny || current.Y > maxy) throw new ApplicationException();
-      foreach (var n in current.CardinalNeighbors())
-      {
-        if (!grid.Add(n)) continue;
-      if (grid.Count % 10000 == 0) Console.WriteLine(grid.Count);
-        open.Enqueue(n);
-      }
-    }
-    Console.WriteLine(grid.Count);
-  }
-
-  private static IEnumerable<Point> LineBetween(Point first, Point second)
-  {
-    long y1 = first.Y;
-    long y2 = first.Y;
-    long x1 = first.X;
-    long x2 = first.X;
-    if (first.X == second.X)
-    {
-      y1 = Math.Min(first.Y, second.Y);
-      y2 = Math.Max(first.Y, second.Y);
-    }
-    else if (first.Y == second.Y)
-    {
-      x1 = Math.Min(first.X, second.X);
-      x2 = Math.Max(first.X, second.X);
-    }
-    else throw new ApplicationException("Points not on a line!");
-    for (var x = x1; x <= x2; x++)
-      for (var y = y1; y <= y2; y++)
-        yield return new(x, y);
+    return vlines.Count(line => line.x <= vertex.X && line.top <= vertex.Y && vertex.Y < line.bottom) % 2 == 1;
   }
 }
