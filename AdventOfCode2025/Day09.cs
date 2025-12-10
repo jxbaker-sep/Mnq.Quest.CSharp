@@ -4,7 +4,6 @@ using P = Parser.ParserBuiltins;
 using Parser;
 using Mng.Quest.CSharp.Utils;
 using Utils;
-using System.Diagnostics;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 
@@ -43,6 +42,7 @@ public class Day09
     var hlines = points.Windows(2).Append([points[0], points[^1]])
       .Where(it => it[0].Y == it[1].Y)
       .Select(it => (left: Math.Min(it[0].X, it[1].X), right: Math.Max(it[0].X, it[1].X), y: it[0].Y))
+      .OrderBy(it => it.y)
       .ToList();
 
     var result = -1L;
@@ -70,6 +70,85 @@ public class Day09
     result.Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("Day09.Sample.txt", 24)]
+  [InlineData("Day09.txt", 1396494456)]
+  public void Part2ViaSquash(string inputFile, long expected)
+  {
+    var points = P.Long.Star(",").End().Select(it => new Point(it[0], it[1]))
+      .ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
+
+    Dictionary<Point, Point> squashedToWhole = [];
+    List<Point> squashed = [];
+
+    var xs = points.Select(it => it.X).Distinct().OrderBy(it => it).ToList();
+    var ys = points.Select(it => it.Y).Distinct().OrderBy(it => it).ToList();
+
+    foreach (var p in points)
+    {
+      var sq = new Point(xs.IndexOf(p.X) * 2, ys.IndexOf(p.Y) * 2);
+      squashed.Add(sq);
+      squashedToWhole[sq] = p;
+    }
+
+    HashSet<Point> polygon = squashed.Windows(2).Append([squashed[0], squashed[^1]])
+      .SelectMany(p => Rectangle(p[0], p[1])).ToHashSet();
+    FloodFill(polygon);
+    // PrintGrid.Print(polygon, '#', '.');
+
+    var ps = squashed.Pairs().ToList();
+    long found = 0;
+    foreach (var (p, index) in ps.WithIndices())
+    {
+      // Console.WriteLine($"{index} / {ps.Count}");
+      if (Rectangle(p.First, p.Second).All(p => polygon.Contains(p)))
+      {
+        var f = squashedToWhole[p.First];
+        var s = squashedToWhole[p.Second];
+        found = Math.Max(found, (Math.Abs(f.X - s.X) + 1) * (Math.Abs(f.Y - s.Y) + 1));
+      }
+    }
+
+    found.Should().Be(expected);
+
+  }
+
+  private static void FloodFill(HashSet<Point> grid)
+  {
+    var minx = grid.Min(p => p.X);
+    var miny = grid.Min(p => p.Y);
+    var maxx = grid.Max(p => p.X);
+    var maxy = grid.Max(p => p.Y);
+    Point outside = new Point(minx - 1, miny + 1);
+    while (!grid.Contains(outside))
+    {
+      if (outside.X > maxx) throw new ApplicationException();
+      outside += Vector.East;
+    }
+    // we're on a line; move one more east
+    outside += Vector.East;
+
+    Queue<Point> open = new([outside]);
+    while (open.TryDequeue(out var current))
+    {
+      if (current.X < minx || current.X > maxx || current.Y < miny || current.Y > maxy) throw new ApplicationException();
+      foreach (var n in current.CardinalNeighbors())
+      {
+        if (!grid.Add(n)) continue;
+        open.Enqueue(n);
+      }
+    }
+  }
+
+
+  private static IEnumerable<Point> Rectangle(Point first, Point second)
+  {
+    HashSet<Point> result = [];
+    for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
+      for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
+        yield return new(x, y);
+  }
+
   private static bool LineInPolygon(Point First, Point Second, List<(long top, long bottom, long x)> vlines, List<(long left, long right, long y)> hlines)
   {
     var minx = Math.Min(First.X, Second.X);
@@ -87,20 +166,20 @@ public class Day09
   private static bool AnyLinesIntersect(List<(long top, long bottom, long x)> vlines, List<(long left, long right, long y)> hlines, long minx, long maxx, long miny, long maxy)
   {
     if (minx > maxx || miny > maxy) return false;
-    if (vlines.Any(line => line.x > minx && line.x < maxx && line.top < miny && miny < line.bottom)) return true;
-    if (vlines.Any(line => line.x > minx && line.x < maxx && line.top < maxy && maxy < line.bottom)) return true;
-    if (hlines.Any(line => line.y > miny && line.y < maxy && line.left < minx && minx < line.right)) return true;
-    if (hlines.Any(line => line.y > miny && line.y < maxy && line.left < maxx && maxx < line.right)) return true;
+    if (vlines.SkipWhile(line => line.x <= minx).TakeWhile(line => line.x < maxx).Any(line => line.top < miny && miny < line.bottom)) return true;
+    if (vlines.SkipWhile(line => line.x <= minx).TakeWhile(line => line.x < maxx).Any(line => line.top < maxy && maxy < line.bottom)) return true;
+    if (hlines.SkipWhile(line => line.y <= miny).TakeWhile(line => line.y < maxy).Any(line => line.left < minx && minx < line.right)) return true;
+    if (hlines.SkipWhile(line => line.y <= miny).TakeWhile(line => line.y < maxy).Any(line => line.left < maxx && maxx < line.right)) return true;
     return false;
   }
 
   private static bool PointInPolygon(Point vertex, List<(long top, long bottom, long x)> vlines, List<(long left, long right, long y)> hlines)
   {
-    foreach (var (left, right, y) in hlines)
+    foreach (var (left, right, y) in hlines.TakeWhile(line => line.y <= vertex.Y))
       if (y == vertex.Y && left <= vertex.X && vertex.X <= right)
         return true;
 
-    foreach (var (top, bottom, x) in vlines)
+    foreach (var (top, bottom, x) in vlines.TakeWhile(line => line.x <= vertex.X))
       if (x == vertex.X && top <= vertex.Y && vertex.Y <= bottom)
         return true;
 
