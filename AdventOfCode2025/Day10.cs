@@ -22,7 +22,7 @@ public class Day10
     var joltageRequirements = P.Format("{{}}", P.Long.Star(","));
 
     var machine = P.Format("{}{}{}", lightDiagram, buttonSchematic.Star(), joltageRequirements)
-      .Select(it => new Machine(it.First, it.Second, it.Third));
+    .Select(it => new Machine(it.First, it.Second, it.Third));
 
     var machines = machine.ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
 
@@ -31,7 +31,7 @@ public class Day10
 
   [Theory]
   [InlineData("Day10.Sample.txt", 33)]
-  // [InlineData("Day10.txt", 0)]
+  [InlineData("Day10.txt", 0)]
   public void Part2(string inputFile, long expected)
   {
     var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join());
@@ -39,15 +39,15 @@ public class Day10
     var joltageRequirements = P.Format("{{}}", P.Long.Star(","));
 
     var machine = P.Format("{}{}{}", lightDiagram, buttonSchematic.Star(), joltageRequirements).End()
-      .Select(it => new Machine(it.First, it.Second.OrderBy(it => it.Count).ToList(), it.Third));
+    .Select(it => new Machine(it.First, it.Second.OrderBy(it => it.Count).ToList(), it.Third));
 
     var machines = machine.ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
 
     // machines.Sum((machine) =>
     // {
-    //   Console.Error.WriteLine(machine.LightDiagram);
-    //   Cache.Clear();
-    //   return PressJoltageButtons(machine);
+    // Console.Error.WriteLine(machine.LightDiagram);
+    // Cache.Clear();
+    // return PressJoltageButtons(machine);
     // }).Should().Be(expected);
 
     machines.Sum(SolveForJoltage).Should().Be(expected);
@@ -95,17 +95,28 @@ public class Day10
 
     var intConsts = machine.ButtonSchematics.Select((it, index) => ctx.MkIntConst($"press{index}")).ToList();
 
-    var solver = ctx.MkSimpleSolver();
+    // Add constraints to the consts
+    using var opt = ctx.MkOptimize();
+    foreach (var (bs, index) in machine.ButtonSchematics.WithIndices())
+    {
+      var intConst = intConsts[index];
+      opt.Add(ctx.MkGe(intConst, ctx.MkInt(0)));
+      opt.Add(ctx.MkLe(intConst, ctx.MkInt(bs.Min(it => machine.JoltageRequirements[it]))));
+    }
+
+    opt.MkMinimize(ctx.MkAdd(intConsts));
+
+    // var solver = ctx.MkSimpleSolver();
     foreach (var i in machine.JoltageRequirements.WithIndices().Select(it => it.Index))
     {
       var goal = ctx.MkInt(machine.JoltageRequirements[i]);
       ArithExpr[] exponents = machine.ButtonSchematics.WithIndices()
-        .Where(it => it.Value.Contains(i)).Select(it => intConsts[it.Index]).ToArray();
-      solver.Assert(ctx.MkEq(goal, ctx.MkAdd(exponents)));
+      .Where(it => it.Value.Contains(i)).Select(it => intConsts[it.Index]).ToArray();
+      opt.Assert(ctx.MkEq(goal, ctx.MkAdd(exponents)));
     }
 
-    if (solver.Check() != Status.SATISFIABLE) return 0;
-    return intConsts.Sum(it => ((IntNum)solver.Model.ConstInterp(it)).Int64);
+    if (opt.Check() != Status.SATISFIABLE) return 0;
+    return intConsts.Sum(it => ((IntNum)opt.Model.ConstInterp(it)).Int64);
     // return ((IntNum)solver.Model.ConstInterp(apress)).Int64 * 3 + ((IntNum)solver.Model.ConstInterp(bpress)).Int64;
   }
 
@@ -117,7 +128,7 @@ public class Day10
     var goal = machine.JoltageRequirements.Join(",");
 
     // PriorityQueue<(IReadOnlyList<long>, long)> open = new(it => it.Item2 + it.Item1.Zip(machine.JoltageRequirements)
-    //   .Max(a => a.Second - a.First));
+    // .Max(a => a.Second - a.First));
     Stack<IReadOnlyList<long>> open = [];
     var max = long.MaxValue;
     open.Push(alloff);
@@ -186,3 +197,5 @@ public class Day10
   }
 
 }
+
+
