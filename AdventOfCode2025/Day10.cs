@@ -5,52 +5,147 @@ using Parser;
 using Mng.Quest.CSharp.Utils;
 using Utils;
 using Microsoft.Z3;
+using System.Runtime.InteropServices;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Storage;
+using MathNet.Numerics.LinearAlgebra.Complex;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 
 public class Day10
 {
-  record Machine(string LightDiagram, List<List<int>> ButtonSchematics, List<long> JoltageRequirements);
+  record Machine(string LightDiagram, List<List<int>> ButtonSchematics, List<int> JoltageRequirements);
+
+  static List<Machine> Parse(string file)
+  {
+    var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join());
+    var buttonSchematic = P.Format("({})", P.Int.Star(","));
+    var joltageRequirements = P.Format("{{}}", P.Int.Star(","));
+
+    var machine = P.Format("{}{}{}", lightDiagram, buttonSchematic.Star(), joltageRequirements)
+      .Select(it => new Machine(it.First, it.Second, it.Third));
+
+    return machine.ParseMany(AdventOfCode2025Loader.ReadLines(file));
+  }
 
   [Theory]
   [InlineData("Day10.Sample.txt", 7)]
   [InlineData("Day10.txt", 396)]
   public void Part1(string inputFile, long expected)
   {
-    var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join());
-    var buttonSchematic = P.Format("({})", P.Int.Star(","));
-    var joltageRequirements = P.Format("{{}}", P.Long.Star(","));
-
-    var machine = P.Format("{}{}{}", lightDiagram, buttonSchematic.Star(), joltageRequirements)
-    .Select(it => new Machine(it.First, it.Second, it.Third));
-
-    var machines = machine.ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
+    var machines = Parse(inputFile);
 
     machines.Sum(PressLightButtons).Should().Be(expected);
   }
 
   [Theory]
   [InlineData("Day10.Sample.txt", 33)]
-  [InlineData("Day10.txt", 0)]
+  [InlineData("Day10.txt", 15688)]
   public void Part2(string inputFile, long expected)
   {
-    var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join());
-    var buttonSchematic = P.Format("({})", P.Int.Star(","));
-    var joltageRequirements = P.Format("{{}}", P.Long.Star(","));
-
-    var machine = P.Format("{}{}{}", lightDiagram, buttonSchematic.Star(), joltageRequirements).End()
-    .Select(it => new Machine(it.First, it.Second.OrderBy(it => it.Count).ToList(), it.Third));
-
-    var machines = machine.ParseMany(AdventOfCode2025Loader.ReadLines(inputFile));
-
-    // machines.Sum((machine) =>
-    // {
-    // Console.Error.WriteLine(machine.LightDiagram);
-    // Cache.Clear();
-    // return PressJoltageButtons(machine);
-    // }).Should().Be(expected);
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+    {
+      // Z3 doesn't work on mac for me...
+      return;
+    }
+    var machines = Parse(inputFile);
 
     machines.Sum(SolveForJoltage).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Day10.Sample.txt", 33)]
+  [InlineData("Day10.txt", 15688)]
+  public void Part2ViaSolving(string inputFile, long expected)
+  {
+    var machines = Parse(inputFile);
+
+    machines.WithIndices().Sum((a) =>
+    {
+      var machine = a.Value;
+      var index = a.Index;
+      Cache.Clear();
+      Console.WriteLine($"{machine.LightDiagram} {index} / {machines.Count}");
+      return (long)(RecursivelySolveJoltages(machine.ButtonSchematics, 0, machine.JoltageRequirements, int.MaxValue) ?? throw new ApplicationException());
+    }).Should().Be(expected);
+  }
+
+  Dictionary<string, int?> Cache = [];
+  public int? RecursivelySolveJoltages(IReadOnlyList<List<int>> buttons, int joltageIndex, IReadOnlyList<int> joltagesRemaining, int hint)
+  {
+    var key = buttons.Select(button => button.Select(i => $"{i}").Join(",")).Join(";") + ":" + $"{joltageIndex}" + ":" + joltagesRemaining.Join(",");
+
+    if (Cache.TryGetValue(key, out var needle)) return needle;
+
+    var nextbuttons = buttons.Where(b => !b.Contains(joltageIndex)).ToList();
+    if (joltagesRemaining[joltageIndex] == 0)
+    {
+      if (nextbuttons.Count == 0) { Cache[key] = 0; return 0; }
+      var x = RecursivelySolveJoltages(nextbuttons, joltageIndex + 1, joltagesRemaining, hint);
+      Cache[key] = x;
+      return x;
+    }
+    var inuse = buttons.Where(b => b.Contains(joltageIndex)).ToList();
+    if (inuse.Count == 0)
+    {
+      Cache[key] = null;
+      return null;
+    }
+
+    int? result = null;
+    foreach (var presses in RecursivelyCreatePresses(inuse, 0, joltageIndex, joltagesRemaining))
+    {
+      var currentResult = presses.Sum();
+      if (result is { } r && currentResult >= r) continue;
+      if (currentResult >= hint) continue;
+      List<int> nextJoltagesRemaining = [.. joltagesRemaining];
+      foreach (var (timesPressed, buttonIndex) in presses.ToList().WithIndices())
+      {
+        foreach (var wire in inuse[buttonIndex])
+        {
+          nextJoltagesRemaining[wire] -= timesPressed;
+        }
+      }
+      if (nextJoltagesRemaining.Any(joltage => joltage < 0)) continue;
+      if (nextbuttons.Count > 0)
+      {
+        var recursive = RecursivelySolveJoltages(nextbuttons, joltageIndex + 1, nextJoltagesRemaining, result == null ? hint - currentResult : (int)result - currentResult);
+        if (recursive is int r2) currentResult += r2;
+        else continue;
+      }
+      result = Math.Min(result ?? int.MaxValue, currentResult);
+    }
+
+    Cache[key] = result;
+    return result;
+  }
+
+  public static IEnumerable<Stack<int>> RecursivelyCreatePresses(IReadOnlyList<List<int>> inuse, int buttonIndex, int remainderIndex, IReadOnlyList<int> remainders)
+  {
+    var max = inuse[buttonIndex].Min(wire => remainders[wire]);
+    if (buttonIndex == inuse.Count - 1)
+    {
+      if (max >= remainders[remainderIndex])
+      {
+        yield return new([remainders[remainderIndex]]);
+      }
+      yield break;
+    }
+
+    for (var i = 0; i <= max; i++)
+    {
+      var newRemainders = remainders.Select((it, index) => inuse[buttonIndex].Contains(index) ? it - i : it).ToList();
+      foreach (var next in RecursivelyCreatePresses(inuse, buttonIndex + 1, remainderIndex, newRemainders))
+      {
+        next.Push(i);
+        yield return next;
+      }
+    }
+  }
+
+  private static List<int?> Add(List<int?> buttonPresses, List<int?> ps)
+  {
+    return buttonPresses.Zip(ps).Select(it => it.First ?? it.Second).ToList();
   }
 
   static long PressLightButtons(Machine machine)
@@ -83,15 +178,6 @@ public class Day10
   static long SolveForJoltage(Machine machine)
   {
     using Context ctx = new([]);
-    // var ax = ctx.MkInt(machine.A.X);
-    // var ay = ctx.MkInt(machine.A.Y);
-    // var bx = ctx.MkInt(machine.B.X);
-    // var by = ctx.MkInt(machine.B.Y);
-    // var px = ctx.MkInt(machine.Prize.X);
-    // var py = ctx.MkInt(machine.Prize.Y);
-
-    // var apress = ctx.MkIntConst("apress");
-    // var bpress = ctx.MkIntConst("bpress");
 
     var intConsts = machine.ButtonSchematics.Select((it, index) => ctx.MkIntConst($"press{index}")).ToList();
 
@@ -117,83 +203,6 @@ public class Day10
 
     if (opt.Check() != Status.SATISFIABLE) return 0;
     return intConsts.Sum(it => ((IntNum)opt.Model.ConstInterp(it)).Int64);
-    // return ((IntNum)solver.Model.ConstInterp(apress)).Int64 * 3 + ((IntNum)solver.Model.ConstInterp(bpress)).Int64;
-  }
-
-
-  static long PressJoltageButtons(Machine machine)
-  {
-    var alloff = Enumerable.Repeat(0L, machine.JoltageRequirements.Count).ToList();
-
-    var goal = machine.JoltageRequirements.Join(",");
-
-    // PriorityQueue<(IReadOnlyList<long>, long)> open = new(it => it.Item2 + it.Item1.Zip(machine.JoltageRequirements)
-    // .Max(a => a.Second - a.First));
-    Stack<IReadOnlyList<long>> open = [];
-    var max = long.MaxValue;
-    open.Push(alloff);
-    Dictionary<string, long> closed = [];
-    closed[alloff.Join(",")] = 0;
-
-    while (open.TryPop(out var current))
-    {
-      var key = current.Join(",");
-      var presses = closed[key];
-      if (presses >= max) continue;
-      foreach (var b in machine.ButtonSchematics)
-      {
-        var next = PressJoltageButton(current, b);
-        var nextKey = next.Join(",");
-        if (closed.TryGetValue(nextKey, out var nextSteps) && nextSteps <= presses + 1) continue;
-        closed[nextKey] = presses + 1;
-        if (nextKey == goal) { max = Math.Min(max, presses + 1); continue; }
-        if (next.Zip(machine.JoltageRequirements).Any(a => a.First > a.Second)) continue;
-        open.Push(next);
-      }
-    }
-    return max;
-  }
-
-  Dictionary<string, long?> Cache = [];
-  long? PressJoltageButtons_old(Machine machine, IReadOnlyList<long> currentJoltage, long clue)
-  {
-    if (clue <= 0) return null;
-    var key = currentJoltage.Join(",");
-
-    if (Cache.TryGetValue(key, out var needle)) return needle;
-
-    var goal = machine.JoltageRequirements.Join(",");
-
-    long? recursiveBest = null;
-    long nextClue = clue - 1;
-
-    foreach (var bs in machine.ButtonSchematics)
-    {
-      var next = PressJoltageButton(currentJoltage, bs);
-      if (next.Join(",") == goal)
-      {
-        recursiveBest = 0;
-        break;
-      }
-      if (next.Zip(machine.JoltageRequirements).Any(a => a.First > a.Second || (a.Second - a.First) > nextClue)) continue;
-      var recursive = PressJoltageButtons_old(machine, next, nextClue);
-      if (recursive is { } rec && rec <= nextClue)
-      {
-        nextClue = rec;
-        if (recursiveBest is { } res) recursiveBest = Math.Min(res, rec);
-        else recursiveBest = recursive;
-      }
-    }
-
-    Cache[key] = recursiveBest is { } ? recursiveBest + 1 : null;
-    return Cache[key];
-  }
-
-  static List<long> PressJoltageButton(IReadOnlyList<long> currentJoltage, List<int> wireup)
-  {
-    List<long> copy = [.. currentJoltage];
-    foreach (var i in wireup) copy[i] += 1;
-    return copy;
   }
 
 }
