@@ -35,20 +35,36 @@ public class Day11
   {
     var servers = Parse(inputFile);
 
-    PathsFrom(servers, "you", "out").Should().Be(expected);
+    PathsFrom(servers, "you", "out", 0).Should().Be(expected);
   }
 
-  public Dictionary<(string, string), long> Cache = [];
-  public long PathsFrom(Dictionary<string, List<string>> servers, string start, string end)
+  [Theory]
+  [InlineData("Day11.Sample.2.txt", 2)]
+  [InlineData("Day11.txt", 296006754704850)]
+  public void Part2(string inputFile, long expected)
   {
-    var key = (start, end);
+    var servers = Parse(inputFile);
+
+    PathsFrom(servers, "svr", "out", 3).Should().Be(expected);
+  }
+
+  public Dictionary<(string, string, long), long> Cache = [];
+  const int fft = 1;
+  const int dac = 2;
+  public long PathsFrom(Dictionary<string, List<string>> servers, string start, string end, long required)
+  {
+    var key = (start, end, required);
     if (Cache.TryGetValue(key, out var cached)) return cached;
+
+    if (start == "fft" && (required == 1 || required == 3)) required -= 1; 
+    if (start == "dac" && (required == 2 || required == 3)) required -= 2; 
 
     long result = 0;
     foreach (var item in servers[start])
     {
-      if (item == end) result += 1;
-      else result += PathsFrom(servers, item, end);
+      if (item == end && required == 0) result += 1;
+      else if (item == end) {} // do nothing
+      else result += PathsFrom(servers, item, end, required);
     }
     Cache[key] = result;
     return result;
