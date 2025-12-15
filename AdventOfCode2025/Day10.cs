@@ -41,7 +41,7 @@ public class Day10
   [Theory]
   [InlineData("Day10.Sample.txt", 33)]
   [InlineData("Day10.txt", 15688)]
-  public void Part2(string inputFile, long expected)
+  public void Part2ViaZ3(string inputFile, long expected)
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
     {
@@ -50,7 +50,7 @@ public class Day10
     }
     var machines = Parse(inputFile);
 
-    machines.Sum(SolveForJoltage).Should().Be(expected);
+    machines.Sum(Z3SolveForJoltage).Should().Be(expected);
   }
 
   [Theory]
@@ -65,15 +65,16 @@ public class Day10
       var machine = a.Value;
       var index = a.Index;
       Cache.Clear();
+      Cache2.Clear();
       Console.WriteLine($"{machine.LightDiagram} {index} / {machines.Count}");
       return (long)(RecursivelySolveJoltages(machine.ButtonSchematics, 0, machine.JoltageRequirements, int.MaxValue) ?? throw new ApplicationException());
     }).Should().Be(expected);
   }
 
-  Dictionary<string, int?> Cache = [];
+    readonly Dictionary<string, int?> Cache = [];
   public int? RecursivelySolveJoltages(IReadOnlyList<List<int>> buttons, int joltageIndex, IReadOnlyList<int> joltagesRemaining, int hint)
   {
-    var key = buttons.Select(button => button.Select(i => $"{i}").Join(",")).Join(";") + ":" + $"{joltageIndex}" + ":" + joltagesRemaining.Join(",");
+    var key = joltagesRemaining.Join(",");
 
     if (Cache.TryGetValue(key, out var needle)) return needle;
 
@@ -120,32 +121,37 @@ public class Day10
     return result;
   }
 
-  public static IEnumerable<Stack<int>> RecursivelyCreatePresses(IReadOnlyList<List<int>> inuse, int buttonIndex, int remainderIndex, IReadOnlyList<int> remainders)
+  Dictionary<string, List<Stack<int>>> Cache2 = [];
+  public List<Stack<int>> RecursivelyCreatePresses(IReadOnlyList<List<int>> inuse, int buttonIndex, int remainderIndex, IReadOnlyList<int> remainders)
   {
+    var key = $"{buttonIndex}-${remainderIndex}-${remainders.Join(",")}";
+
+    if (Cache2.TryGetValue(key, out var found)) return [.. found.Select(it => new Stack<int>(it))];
+
+    List<Stack<int>> result = [];
     var max = inuse[buttonIndex].Min(wire => remainders[wire]);
     if (buttonIndex == inuse.Count - 1)
     {
       if (max >= remainders[remainderIndex])
       {
-        yield return new([remainders[remainderIndex]]);
+        result.Add(new([remainders[remainderIndex]]));
       }
-      yield break;
     }
-
-    for (var i = 0; i <= max; i++)
+    else
     {
-      var newRemainders = remainders.Select((it, index) => inuse[buttonIndex].Contains(index) ? it - i : it).ToList();
-      foreach (var next in RecursivelyCreatePresses(inuse, buttonIndex + 1, remainderIndex, newRemainders))
+      for (var i = 0; i <= max; i++)
       {
-        next.Push(i);
-        yield return next;
+        var newRemainders = remainders.Select((it, index) => inuse[buttonIndex].Contains(index) ? it - i : it).ToList();
+        foreach (var next in RecursivelyCreatePresses(inuse, buttonIndex + 1, remainderIndex, newRemainders))
+        {
+          next.Push(i);
+          result.Add(next);
+        }
       }
     }
-  }
 
-  private static List<int?> Add(List<int?> buttonPresses, List<int?> ps)
-  {
-    return buttonPresses.Zip(ps).Select(it => it.First ?? it.Second).ToList();
+    Cache2[key] = result;
+    return result;
   }
 
   static long PressLightButtons(Machine machine)
@@ -175,7 +181,7 @@ public class Day10
     return ca.Join();
   }
 
-  static long SolveForJoltage(Machine machine)
+  static long Z3SolveForJoltage(Machine machine)
   {
     using Context ctx = new([]);
 
@@ -197,7 +203,9 @@ public class Day10
     {
       var goal = ctx.MkInt(machine.JoltageRequirements[i]);
       ArithExpr[] exponents = machine.ButtonSchematics.WithIndices()
-      .Where(it => it.Value.Contains(i)).Select(it => intConsts[it.Index]).ToArray();
+        .Where(it => it.Value.Contains(i))
+        .Select(it => intConsts[it.Index])
+        .ToArray();
       opt.Assert(ctx.MkEq(goal, ctx.MkAdd(exponents)));
     }
 
