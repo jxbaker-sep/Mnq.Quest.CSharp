@@ -29,21 +29,21 @@ public class Quest07
     plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(), track, loops)).Select(it => it[0]).Join("").Should().Be(expected);
   }
 
-  // [Theory]
-  // [InlineData(-1)]
-  // public void Part3(long expected)
-  // {
-  //   var rivalPlan = GetInput("Quest07.3.txt").Single();
-  //   var track = GetTrack("Quest07.3.Track.txt");
+  [Theory]
+  [InlineData(4275)]
+  public void Part3(long expected)
+  {
+    var rivalPlan = GetInput("Quest07.3.txt").Single();
+    var track = GetTrack("Quest07.3.Track.txt");
 
-  //   var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024);
+    var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024);
 
-  //   CreateAllPlans(5, 5, 3).LongCount(plan =>
-  //   {
-  //     Console.WriteLine(plan);
-  //     return GatherOnTrack(plan, track, 2024) > rivalScore;
-  //   }).Should().Be(expected);
-  // }
+    CreateAllPlans(5, 3, 3).LongCount(plan =>
+    {
+      // Console.WriteLine(plan);
+      return GatherOnTrack(plan, track, 2024) > rivalScore;
+    }).Should().Be(expected);
+  }
 
   static IEnumerable<string> CreateAllPlans(int plus, int minus, int equals)
   {
