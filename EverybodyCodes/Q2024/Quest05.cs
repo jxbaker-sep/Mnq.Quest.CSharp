@@ -5,9 +5,6 @@ using Utils;
 using Mng.Quest.CSharp.Utils;
 using System.Data;
 using Mnq.Quest.CSharp.EverybodyCodes;
-using System.Net.Sockets;
-using System.Xml;
-using System.Linq.Expressions;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
