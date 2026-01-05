@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
+using Mng.Quest.CSharp.Utils;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
@@ -105,21 +106,38 @@ public class Quest07
 
   private static string GetTrack(string inputFile)
   {
-    string s1 = "";
-    string s2 = "";
-    foreach (var line in ECLoader.ReadLines(inputFile))
+    var lines = ECLoader.ReadLines(inputFile);
+    var result = "";
+    var p = new Point(0, 0);
+    var v = Vector.East;
+
+    char at(Point p2) => lines[(int)p2.Y][(int)p2.X];
+    bool isValid(Point p2) => p2.Y >= 0 && p2.Y < lines.Count && p2.X >= 0 && p2.X < lines[0].Length;
+
+    Dictionary<Vector, List<Vector>> Turns = [];
+    Turns[Vector.North] = [Vector.East, Vector.West];
+    Turns[Vector.South] = [Vector.East, Vector.West];
+    Turns[Vector.East] = [Vector.North, Vector.South];
+    Turns[Vector.West] = [Vector.North, Vector.South];
+
+    while (result.Length == 0 || result[^1] != 'S')
     {
-      if (line[1] != ' ')
+      var np = p + v;
+      if (!isValid(np) || at(np) == ' ')
       {
-        if (line[0] == 'S') s1 = line;
-        else s2 += line;
+        foreach(var turn in Turns[v])
+        {
+          if (isValid(p + turn) && at(p + turn) != ' ')
+          {
+            np = p + turn;
+            v = turn;
+            break;
+          }
+        }
       }
-      else
-      {
-        s2 += line[0];
-        s1 += line[^1];
-      }
+      result += at(np);
+      p = np;
     }
-    return s1 + s2.Reverse().Join();
+    return "S" + result[..^1];
   }
 }
