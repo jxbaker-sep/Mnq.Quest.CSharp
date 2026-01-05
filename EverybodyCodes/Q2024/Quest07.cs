@@ -24,49 +24,102 @@ public class Quest07
   public void Part2(string inputFile, string trackFile, int loops, string expected)
   {
     var plans = GetInput(inputFile);
-    var temp = GetTrack(trackFile);
+    var track = GetTrack(trackFile);
 
-    plans.OrderByDescending(plan => GatherOnTrack(plan, temp, loops)).Select(it => it[0]).Join("").Should().Be(expected);
+    plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(), track, loops, 10)).Select(it => it[0]).Join("").Should().Be(expected);
   }
 
-  static long GatherOnTrack(List<string> plan, string track, int loops)
+  [Theory]
+  [InlineData(-1)]
+  public void Part3(long expected)
   {
-    var current = 10;
-    var total = 0;
-    var currentLoop = 0;
-    var trackIndex = 1;
-    var step = 0;
-    plan = plan[1..];
-    while (currentLoop < loops)
+    var rivalPlan = GetInput("Quest07.3.txt").Single();
+    var track = GetTrack("Quest07.3.Track.txt");
+
+    var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024, 10);
+
+    CreateAllPlans(5, 5, 3).LongCount(plan =>
     {
-      var currentAction = plan[step++ % plan.Count];
-      switch (track[trackIndex++ % track.Length])
+      Console.WriteLine(plan);
+      return GatherOnTrack(plan, track, 2024, 10) > rivalScore;
+    }).Should().Be(expected);
+  }
+
+  static IEnumerable<string> CreateAllPlans(int plus, int minus, int equals)
+  {
+    if (plus + minus + equals == 1)
+    {
+      if (plus > 0) yield return "+";
+      if (minus > 0) yield return "-";
+      if (equals > 0) yield return "=";
+      yield break;
+    }
+
+    if (plus > 0)
+    {
+      foreach (var item in CreateAllPlans(plus - 1, minus, equals))
+      {
+        yield return $"+{item}";
+      }
+    }
+
+    if (minus > 0)
+    {
+      foreach (var item in CreateAllPlans(plus, minus - 1, equals))
+      {
+        yield return $"-{item}";
+      }
+    }
+
+    if (equals > 0)
+    {
+      foreach (var item in CreateAllPlans(plus, minus, equals - 1))
+      {
+        yield return $"={item}";
+      }
+    }
+  }
+
+  // The track will be the same each time, so no need to use that as part of key
+  public Dictionary<(string, int, long), long> Cache = [];
+
+  long GatherOnTrack(string plan, string track, int loops, long current)
+  {
+    if (loops == 0) return 0;
+    var key = (plan, loops, current);
+    if (Cache.TryGetValue(key, out var previous)) return previous;
+
+    long total = 0;
+
+    for (var step = 0; step < track.Length; step++)
+    {
+      var currentAction = plan[step % plan.Length];
+      switch (track[step])
       {
         case 'S':
-          currentLoop += 1;
-          break;
         case '=':
           break;
         case '+':
-          currentAction = "+";
+          currentAction = '+';
           break;
         case '-':
-          currentAction = "-";
+          currentAction = '-';
           break;
         default: throw new ApplicationException();
       }
 
       switch (currentAction)
       {
-        case "+":
+        case '+':
           current += 1;
           break;
-        case "-":
+        case '-':
           current -= 1;
           break;
       }
       total += current;
     }
+    total += GatherOnTrack(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1, current);
     return total;
   }
 
@@ -112,7 +165,7 @@ public class Quest07
     var v = Vector.East;
 
     char at(Point p2) => lines[(int)p2.Y][(int)p2.X];
-    bool isValid(Point p2) => p2.Y >= 0 && p2.Y < lines.Count && p2.X >= 0 && p2.X < lines[0].Length;
+    bool isValid(Point p2) => p2.Y >= 0 && p2.Y < lines.Count && p2.X >= 0 && p2.X < lines[(int)p2.Y].Length;
 
     Dictionary<Vector, List<Vector>> Turns = [];
     Turns[Vector.North] = [Vector.East, Vector.West];
@@ -125,7 +178,7 @@ public class Quest07
       var np = p + v;
       if (!isValid(np) || at(np) == ' ')
       {
-        foreach(var turn in Turns[v])
+        foreach (var turn in Turns[v])
         {
           if (isValid(p + turn) && at(p + turn) != ' ')
           {
@@ -138,6 +191,6 @@ public class Quest07
       result += at(np);
       p = np;
     }
-    return "S" + result[..^1];
+    return result;
   }
 }
