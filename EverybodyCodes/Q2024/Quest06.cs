@@ -13,23 +13,50 @@ public class Quest06
   {
     var tree = GetInput(inputFile);
 
-    Paths(tree, "RR").GroupToDictionary(it => it.Length, it => it)
+    Paths(tree, "RR", [], false).GroupToDictionary(it => it.Length, it => it)
       .Single(it => it.Value.Count == 1)
       .Value[0]
       .Should().Be(expected);
   }
 
-  static IEnumerable<string> Paths(IReadOnlyDictionary<string, List<string>> tree, string current)
+  [Theory]
+  [InlineData("Quest06.2.txt", "RJVDGLRZJF@")]
+  public void Part2(string inputFile, string expected)
   {
+    var tree = GetInput(inputFile);
+
+    Paths(tree, "RR", [], true).GroupToDictionary(it => it.Length, it => it)
+      .Single(it => it.Value.Count == 1)
+      .Value[0]
+      .Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Quest06.3.txt", "RSHPKNPBKQCS@")]
+  public void Part3(string inputFile, string expected)
+  {
+    var tree = GetInput(inputFile);
+
+    Paths(tree, "RR", [], true).GroupToDictionary(it => it.Length, it => it)
+      .Single(it => it.Value.Count == 1)
+      .Value[0]
+      .Should().Be(expected);
+  }
+
+  static IEnumerable<string> Paths(IReadOnlyDictionary<string, List<string>> tree, string current, HashSet<string> previous, bool firstLetterOnly)
+  {
+    if (previous.Contains(current)) yield break;
+    HashSet<string> currentPath = [..previous, current];
+    var prefix = firstLetterOnly ? current[..1] : current;
     foreach (var item in tree.GetValueOrDefault(current) ?? [])
     {
       if (item == "@")
       {
-        yield return $"{current}@";
+        yield return $"{prefix}@";
       }
-      else foreach (var sub in Paths(tree, item))
+      else foreach (var sub in Paths(tree, item, currentPath, firstLetterOnly))
       {
-        yield return $"{current}{sub}";
+        yield return $"{prefix}{sub}";
       }
     }
   }
