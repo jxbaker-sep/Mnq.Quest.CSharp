@@ -120,6 +120,7 @@ public class Quest07
       total += current;
     }
     total += GatherOnTrack(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1, current);
+    Cache[key] = total;
     return total;
   }
 
