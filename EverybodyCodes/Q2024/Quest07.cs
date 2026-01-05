@@ -172,8 +172,7 @@ public class Quest07
     var p = new Point(0, 0);
     var v = Vector.East;
 
-    char at(Point p2) => lines[(int)p2.Y][(int)p2.X];
-    bool isValid(Point p2) => p2.Y >= 0 && p2.Y < lines.Count && p2.X >= 0 && p2.X < lines[(int)p2.Y].Length;
+    char at(Point p2) => p2.Y >= 0 && p2.Y < lines.Count && p2.X >= 0 && p2.X < lines[(int)p2.Y].Length ? lines[(int)p2.Y][(int)p2.X] : ' ';
 
     Dictionary<Vector, List<Vector>> Turns = [];
     Turns[Vector.North] = [Vector.East, Vector.West];
@@ -184,11 +183,11 @@ public class Quest07
     while (result.Length == 0 || result[^1] != 'S')
     {
       var np = p + v;
-      if (!isValid(np) || at(np) == ' ')
+      if (at(np) == ' ')
       {
         foreach (var turn in Turns[v])
         {
-          if (isValid(p + turn) && at(p + turn) != ' ')
+          if (at(p + turn) != ' ')
           {
             np = p + turn;
             v = turn;
