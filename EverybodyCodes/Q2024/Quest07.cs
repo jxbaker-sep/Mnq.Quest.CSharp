@@ -26,24 +26,24 @@ public class Quest07
     var plans = GetInput(inputFile);
     var track = GetTrack(trackFile);
 
-    plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(), track, loops, 10)).Select(it => it[0]).Join("").Should().Be(expected);
+    plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(), track, loops)).Select(it => it[0]).Join("").Should().Be(expected);
   }
 
-  [Theory]
-  [InlineData(-1)]
-  public void Part3(long expected)
-  {
-    var rivalPlan = GetInput("Quest07.3.txt").Single();
-    var track = GetTrack("Quest07.3.Track.txt");
+  // [Theory]
+  // [InlineData(-1)]
+  // public void Part3(long expected)
+  // {
+  //   var rivalPlan = GetInput("Quest07.3.txt").Single();
+  //   var track = GetTrack("Quest07.3.Track.txt");
 
-    var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024, 10);
+  //   var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024);
 
-    CreateAllPlans(5, 5, 3).LongCount(plan =>
-    {
-      Console.WriteLine(plan);
-      return GatherOnTrack(plan, track, 2024, 10) > rivalScore;
-    }).Should().Be(expected);
-  }
+  //   CreateAllPlans(5, 5, 3).LongCount(plan =>
+  //   {
+  //     Console.WriteLine(plan);
+  //     return GatherOnTrack(plan, track, 2024) > rivalScore;
+  //   }).Should().Be(expected);
+  // }
 
   static IEnumerable<string> CreateAllPlans(int plus, int minus, int equals)
   {
@@ -80,16 +80,22 @@ public class Quest07
     }
   }
 
-  // The track will be the same each time, so no need to use that as part of key
-  public Dictionary<(string, int, long), long> Cache = [];
+  long GatherOnTrack(string plan, string track, int loops)
+  {
+    return GatherOnTrack2(plan, track, loops) + 10 * track.Length * loops;
+  }
 
-  long GatherOnTrack(string plan, string track, int loops, long current)
+  // The track will be the same each time, so no need to use that as part of key
+  public Dictionary<(string, int), long> Cache = [];
+
+  long GatherOnTrack2(string plan, string track, int loops)
   {
     if (loops == 0) return 0;
-    var key = (plan, loops, current);
+    var key = (plan, loops);
     if (Cache.TryGetValue(key, out var previous)) return previous;
 
     long total = 0;
+    long current = 0;
 
     for (var step = 0; step < track.Length; step++)
     {
@@ -119,7 +125,8 @@ public class Quest07
       }
       total += current;
     }
-    total += GatherOnTrack(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1, current);
+    total += GatherOnTrack2(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1);
+    total += (loops - 1) * current * track.Length;
     Cache[key] = total;
     return total;
   }
