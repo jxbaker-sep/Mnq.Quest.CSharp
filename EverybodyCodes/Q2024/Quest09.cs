@@ -10,6 +10,7 @@ public class Quest09
   IReadOnlyList<IReadOnlyList<long>>  StampsCollection = [
     [10, 5, 3, 1],
     [30, 25, 24, 20, 16, 15, 10, 5, 3, 1],
+    [101, 100, 75, 74, 50, 49, 38, 37, 30, 25, 24, 20, 16, 15, 10, 5, 3, 1]
   ];
 
   [Theory]
@@ -25,6 +26,22 @@ public class Quest09
     brightnesses.Sum(b =>
     {
       return ComputeMinimumBeetles(b, stamps);
+    }).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Quest09.3.Sample.txt", 2, 10449)]
+  // [InlineData("Quest09.3.txt", 2, 0)]
+  public void Part3(string inputFile, int whichStamp, long expected)
+  {
+    var stamps = StampsCollection[whichStamp];
+    var brightnesses = GetInput(inputFile);
+
+    brightnesses.Sum(b =>
+    {
+      var half = b / 2;
+      var n = b % 2;
+      return Enumerable.Range(0, 51).Min(delta => ComputeMinimumBeetles(half - delta, stamps) + ComputeMinimumBeetles(half + delta + n, stamps));
     }).Should().Be(expected);
   }
 
