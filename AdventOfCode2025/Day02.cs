@@ -2,8 +2,6 @@
 using FluentAssertions;
 using P = Parser.ParserBuiltins;
 using Parser;
-using Mng.Quest.CSharp.Utils;
-using System.Data.Common;
 using Utils;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;

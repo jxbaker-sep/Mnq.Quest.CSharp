@@ -2,13 +2,9 @@
 using FluentAssertions;
 using P = Parser.ParserBuiltins;
 using Parser;
-using Mng.Quest.CSharp.Utils;
 using Utils;
 using Microsoft.Z3;
 using System.Runtime.InteropServices;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Storage;
-using MathNet.Numerics.LinearAlgebra.Complex;
 
 namespace Mng.Quest.CSharp.AdventOfCode2025;
 

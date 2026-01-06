@@ -2,11 +2,8 @@ using P = Parser.ParserBuiltins;
 using Parser;
 using FluentAssertions;
 using Utils;
-using Microsoft.Z3;
 using Mng.Quest.CSharp.Utils;
 using System.Numerics;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using FluentAssertions.Extensions;
 using System.Security.Cryptography;
 
 namespace Mnq.Quest.CSharp.Codyssi;

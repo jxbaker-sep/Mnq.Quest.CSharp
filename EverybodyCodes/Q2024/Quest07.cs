@@ -2,7 +2,6 @@ using FluentAssertions;
 using Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
 using Mng.Quest.CSharp.Utils;
-using System.Collections;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
