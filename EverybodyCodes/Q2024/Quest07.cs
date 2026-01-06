@@ -2,6 +2,7 @@ using FluentAssertions;
 using Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
 using Mng.Quest.CSharp.Utils;
+using System.Collections;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
@@ -40,7 +41,6 @@ public class Quest07
 
     CreateAllPlans(5, 3, 3).LongCount(plan =>
     {
-      // Console.WriteLine(plan);
       return GatherOnTrack(plan, track, 2024) > rivalScore;
     }).Should().Be(expected);
   }
@@ -85,14 +85,16 @@ public class Quest07
     return GatherOnTrack2(plan, track, loops) + 10 * track.Length * loops;
   }
 
-  // The track will be the same each time, so no need to use that as part of key
-  public Dictionary<(string, int), long> Cache = [];
+  Dictionary<string, (long Total, long Current)> Cache = [];
 
   long GatherOnTrack2(string plan, string track, int loops)
   {
     if (loops == 0) return 0;
-    var key = (plan, loops);
-    if (Cache.TryGetValue(key, out var previous)) return previous;
+    var key = plan;
+    if (Cache.TryGetValue(key, out var found))
+    {
+      return found.Total + GatherOnTrack2(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1) + (loops - 1) * found.Current * track.Length;
+    }
 
     long total = 0;
     long current = 0;
@@ -125,9 +127,9 @@ public class Quest07
       }
       total += current;
     }
+    Cache[key] = (total, current);
     total += GatherOnTrack2(plan[(track.Length % plan.Length)..] + plan[..(track.Length % plan.Length)], track, loops-1);
     total += (loops - 1) * current * track.Length;
-    Cache[key] = total;
     return total;
   }
 
