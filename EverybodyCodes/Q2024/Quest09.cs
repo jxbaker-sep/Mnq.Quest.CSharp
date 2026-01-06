@@ -6,22 +6,38 @@ namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
 public class Quest09
 {
+  IReadOnlyList<IReadOnlyList<long>>  StampsCollection = [
+    [10, 5, 3, 1],
+    [30, 25, 24, 20, 16, 15, 10, 5, 3, 1],
+  ];
+
   [Theory]
-  [InlineData("Quest09.1.Sample.txt", 21)]
-  [InlineData("Quest09.1.txt", 8191127)]
-  public void Part1(string inputFile, long expected)
+  // [InlineData("Quest09.1.Sample.txt", 0, 10)]
+  // [InlineData("Quest09.1.txt", 0, 13603)]
+  [InlineData("Quest09.2.Sample.txt", 1, 10)]
+  // [InlineData("Quest09.2.txt", 1, 0)]
+  public void Part1(string inputFile, int whichStamp, long expected)
   {
-    var blocks = GetInput(inputFile);
-    var n = (long)Math.Floor(Math.Sqrt(blocks)) + 1;
-    var width = 1 + 2 * (n - 1);
-    var missing = n * n - blocks;
-    (width * missing).Should().Be(expected);
+    var stamps = StampsCollection[whichStamp];
+    var brightnesses = GetInput(inputFile);
+
+    brightnesses.Sum(b =>
+    {
+      long result = 0;
+      foreach(var stamp in stamps)
+      {
+        var n = b / stamp;
+        b -= n * stamp;
+        result += n;
+      }
+      return result;
+    }).Should().Be(expected);
   }
 
 
-  private static long GetInput(string inputFile)
+  private static List<long> GetInput(string inputFile)
   {
-    return ECLoader.ReadLines(inputFile).Select(it => Convert.ToInt64(it)).Single();
+    return ECLoader.ReadLines(inputFile).Select(it => Convert.ToInt64(it)).ToList();
   }
 
 }
