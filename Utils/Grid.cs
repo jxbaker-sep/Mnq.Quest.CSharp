@@ -3,9 +3,9 @@ namespace Mng.Quest.CSharp.Utils;
 public class Grid<T>
 {
   private readonly List<List<T>> Actual;
-  public long Width { get; init; }
-  public long Height { get; init; }
-  public long Count => Width * Height;
+  public int Width { get; init; }
+  public int Height { get; init; }
+  public long Count => (long)Width * Height;
 
   public Grid(IEnumerable<IEnumerable<T>> input)
   {
@@ -18,6 +18,17 @@ public class Grid<T>
   {
     get => Actual[(int)p.Y][(int)p.X];
     set => Actual[(int)p.Y][(int)p.X] = value;
+  }
+
+  public T this[int y, int x]
+  {
+    get => Actual[y][x];
+    set => Actual[y][x] = value;
+  }
+
+  public List<T> this[int y]
+  {
+    get => Actual[y];
   }
 
   public bool Contains(Point p) => 0 <= p.Y && p.Y < Height && 0 <= p.X && p.X < Width;

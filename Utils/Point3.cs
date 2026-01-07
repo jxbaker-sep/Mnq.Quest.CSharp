@@ -14,4 +14,7 @@ public static class Point3Extensions
 
   public static double StraightLineDistance(this Point3 self, Point3 other) =>
     Math.Sqrt(Math.Pow(self.X - other.X, 2) + Math.Pow(self.Y - other.Y, 2) + Math.Pow(self.Z - other.Z, 2));
+
+  public static long PseudoStraightLineDistance(this Point3 self, Point3 other) =>
+    (self.X - other.X) * (self.X - other.X) + (self.Y - other.Y) * (self.Y - other.Y) + (self.Z - other.Z) * (self.Z - other.Z);
 }
