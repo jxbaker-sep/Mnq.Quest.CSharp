@@ -38,7 +38,6 @@ public class Quest13
     var start = world.Goal;
     var goal = world.Starts.ToHashSet();
 
-    // Queue<Point> open = new([start]);
     Dictionary<Point, long> closed = [];
     closed[start] = 0;
     PriorityQueue<Point> open = new(it => closed[it]);
