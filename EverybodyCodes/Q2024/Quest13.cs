@@ -10,58 +10,23 @@ public class Quest13
   [InlineData("Quest13.1.Sample.txt", 28)]
   [InlineData("Quest13.1.txt", 159)]
   [InlineData("Quest13.2.txt", 646)]
+  [InlineData("Quest13.3.Sample.txt", 14)]
+  [InlineData("Quest13.3.txt", 529)]
   public void Part1(string inputFile, long expected)
   {
     var world = GetInput(inputFile);
 
-    FindPath(world, world.Starts.Single()).Should().Be(expected);
+    FindPath(world).Should().Be(expected);
   }
 
-  [Theory]
-  // [InlineData("Quest13.3.Sample.txt", 14)]
-  [InlineData("Quest13.3.txt", 529)]
-  public void Part3(string inputFile, long expected)
-  {
-    var world = GetInput(inputFile);
-
-    // world.Starts.Min(start => FindPath(world, start)).Should().Be(expected);
-    ReverseFindPath(world).Should().Be(expected);
-
-  }
-
-  private long FindPath(World world, Point start)
-  {
-    var grid = world.Grid;
-    var goal = world.Goal;
-
-    PriorityQueue<(Point position, long steps)> open = new(it => it.steps);
-    open.Enqueue((start, 0));
-    Dictionary<Point, long> closed = [];
-    closed[start] = 0;
-
-    while (open.TryDequeue(out var current))
-    {
-      foreach (var neighbor in Open(grid, current.position))
-      {
-        var d = current.steps + 1 + Elevate(grid[current.position], grid[neighbor]);
-        if (closed.GetValueOrDefault(neighbor, long.MaxValue) < d) continue;
-        closed[neighbor] = d;
-        if (neighbor == goal) return d;
-        open.Enqueue((neighbor, d));
-      }
-    }
-
-    throw new ApplicationException();
-  }
-
-  private long ReverseFindPath(World world)
+  private long FindPath(World world)
   {
     var grid = world.Grid;
     var start = world.Goal;
-    var goal = world.Starts;
+    var goal = world.Starts.ToHashSet();
 
-    PriorityQueue<(Point position, List<Point> path, long steps)> open = new(it => it.steps);
-    open.Enqueue((start, [start], 0));
+    PriorityQueue<(Point position, long steps)> open = new(it => it.steps);
+    open.Enqueue((start, 0));
     Dictionary<Point, long> closed = [];
     closed[start] = 0;
     var min = long.MaxValue;
@@ -75,16 +40,16 @@ public class Quest13
       if (current.steps >= min) continue;
       foreach (var neighbor in Open(grid, current.position))
       {
-        if (current.path.Contains(neighbor)) continue;
         var d = current.steps + 1 + Elevate(grid[current.position], grid[neighbor]);
         if (d > min) continue;
         if (closed.GetValueOrDefault(neighbor, long.MaxValue) < d) continue;
         closed[neighbor] = d;
-        if (goal.Contains(current.position))
+        if (goal.Contains(neighbor))
         {
-          min = Math.Min(min, d);
+          if (d < min) min = d;
+          else continue;
         }
-        open.Enqueue((neighbor, [.. current.path, neighbor], d));
+        open.Enqueue((neighbor, d));
       }
     }
 
