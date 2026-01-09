@@ -1,8 +1,5 @@
 using FluentAssertions;
-using Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
-using Mng.Quest.CSharp.Utils;
-using System.Net.Sockets;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
@@ -39,7 +36,7 @@ public class Quest11
     (results.Max() - results.Min()).Should().Be(expected);
   }
 
-  private Dictionary<(string, long), long> Cache = [];
+  private readonly Dictionary<(string, long), long> Cache = [];
   private long Find(Dictionary<string, List<string>> grid, string node, long generations)
   {
     if (generations == 0) return 1;
