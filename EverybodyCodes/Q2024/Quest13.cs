@@ -9,6 +9,7 @@ public class Quest13
   [Theory]
   [InlineData("Quest13.1.Sample.txt", 28)]
   [InlineData("Quest13.1.txt", 159)]
+  [InlineData("Quest13.2.txt", 646)]
   public void Part1(string inputFile, long expected)
   {
     var world = GetInput(inputFile);
