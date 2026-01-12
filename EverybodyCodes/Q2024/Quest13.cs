@@ -108,7 +108,7 @@ public class Quest13
     var temp = ECLoader.ReadLines(inputFile).Gridify();
     var grid = ECLoader.ReadLines(inputFile).Gridify(it => it switch { '#' => Wall, ' ' => Wall, 'S' => 0, 'E' => 0, _ => it - '0' });
 
-    return new(grid, [.. temp.Items().Where(it => it.Value == 'S').Select(it => it.Key)], temp.Items().Single(it => it.Value == 'E').Key);
+    return new(grid, [.. temp.Items().Where(it => it.Value == 'S').Select(it => it.Point)], temp.Items().Single(it => it.Value == 'E').Point);
   }
 
 }

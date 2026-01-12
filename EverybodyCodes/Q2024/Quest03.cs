@@ -73,6 +73,6 @@ public class Quest03
     return ECLoader.ReadLines(inputFile).Gridify()
       .Items()
       .Where(it => it.Value == '#')
-      .ToDictionary(it => it.Key, it => 0L);
+      .ToDictionary(it => it.Point, it => 0L);
   }
 }

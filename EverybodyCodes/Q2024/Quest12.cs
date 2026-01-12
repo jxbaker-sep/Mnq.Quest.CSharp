@@ -38,10 +38,10 @@ public class Quest12
     List<Cannon> Cannons = [];
     List<Target> Targets = [];
     var grid = ECLoader.ReadLines(inputFile).Gridify();
-    Cannons.Add(new (grid.Items().Single(it => it.Value == 'A').Key, 1));
-    Cannons.Add(new (grid.Items().Single(it => it.Value == 'B').Key, 2));
-    Cannons.Add(new (grid.Items().Single(it => it.Value == 'C').Key, 3));
-    Targets.AddRange(grid.Items().Where(it => it.Value == 'T' || it.Value == 'H').Select(it => new Target(it.Key, it.Value == 'H' ? 2 : 1))
+    Cannons.Add(new (grid.Items().Single(it => it.Value == 'A').Point, 1));
+    Cannons.Add(new (grid.Items().Single(it => it.Value == 'B').Point, 2));
+    Cannons.Add(new (grid.Items().Single(it => it.Value == 'C').Point, 3));
+    Targets.AddRange(grid.Items().Where(it => it.Value == 'T' || it.Value == 'H').Select(it => new Target(it.Point, it.Value == 'H' ? 2 : 1))
       .OrderBy(target => target.P.Y).ThenBy(target => target.P.X));
 
     return new(Cannons, Targets);

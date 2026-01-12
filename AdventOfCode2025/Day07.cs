@@ -13,7 +13,7 @@ public class Day07
   {
     var grid = AdventOfCode2025Loader.ReadLines(inputFile).Gridify();
 
-    var start = grid.Items().Single(it => it.Value == 'S').Key;
+    var start = grid.Items().Single(it => it.Value == 'S').Point;
 
     Queue<Point> open = new([start + Vector.South]);
     var splits = 0L;
@@ -44,7 +44,7 @@ public class Day07
   {
     var grid = AdventOfCode2025Loader.ReadLines(inputFile).Gridify();
 
-    var start = grid.Items().Single(it => it.Value == 'S').Key;
+    var start = grid.Items().Single(it => it.Value == 'S').Point;
 
     Queue<Point> open = new([start + Vector.South]);
 
