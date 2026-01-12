@@ -14,6 +14,8 @@ public class Quest15
   [Theory]
   [InlineData("Quest15.1.Sample.txt", 26)]
   [InlineData("Quest15.1.txt", 204)]
+    [InlineData("Quest15.2.Sample.txt", 38)]
+  [InlineData("Quest15.2.txt", 520)]
   public void Part1(string inputFile, int expected)
   {
     var grid = GetInput(inputFile);
@@ -21,16 +23,6 @@ public class Quest15
     Solve1(grid).Should().Be(expected);
   }
 
-  [Theory]
-  [InlineData("Quest15.2.Sample.txt", 38)]
-  [InlineData("Quest15.2.txt", 520)]
-  public void Part2(string inputFile, int expected)
-  {
-    var grid = GetInput(inputFile);
-    HashSet<char> herbs = [..grid.Items().Where(it => it.Value != Wall && it.Value != Open).Select(it => it.Value)];
-
-    Solve1(grid).Should().Be(expected);
-  }
 
   static long Solve1(Grid<char> grid)
   {
