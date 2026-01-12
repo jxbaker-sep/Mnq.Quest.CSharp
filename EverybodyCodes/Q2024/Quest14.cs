@@ -37,16 +37,15 @@ public class Quest14
     HashSet<Point3> leaves = [.. lines.Select(it => Tree(it).Leaf)];
 
     tree.Where(it => it.X == 0 && it.Y == 0)
-      .Min(trunk => leaves.Select(leaf => SegmentsTo(tree, trunk, leaf)).Sum())
+      .Min(trunk => CountToSegments(tree, trunk, leaves))
       .Should().Be(expected);
   }
 
-  static long SegmentsTo(HashSet<Point3> tree, Point3 trunk, Point3 leaf)
+  static long CountToSegments(HashSet<Point3> tree, Point3 trunk, HashSet<Point3> leaves)
   {
     Dictionary<Point3, long> closed = [];
     closed[trunk] = 0;
-    // Queue<Point3> open = [];
-    PriorityQueue<Point3> open = new(it => closed[it] + it.ManhattanDistance(leaf));
+    Queue<Point3> open = [];
     open.Enqueue(trunk);
 
     while (open.TryDequeue(out var current))
@@ -55,7 +54,6 @@ public class Quest14
       {
         var neighbor = current + v;
         var d = closed[current] + 1;
-        if (neighbor == leaf) return d;
         if (!tree.Contains(neighbor)) continue;
         if (closed.GetValueOrDefault(neighbor, long.MaxValue) <= d) continue;
         closed[neighbor] = d;
@@ -63,10 +61,10 @@ public class Quest14
       }
     }
 
-    throw new ApplicationException();
+    return leaves.Sum(leaf => closed[leaf]);
   }
 
-  (HashSet<Point3> Tree, Point3 Leaf) Tree(List<Step> steps)
+  static (HashSet<Point3> Tree, Point3 Leaf) Tree(List<Step> steps)
   {
     HashSet<Point3> tree = [];
     HashSet<Point3> leaves = [];
