@@ -12,7 +12,7 @@ public class Quest14
   public void Part1(string inputFile, long expected)
   {
     var lines = GetInput(inputFile);
-    Tree(lines.Single()).Max(it => it.Z).Should().Be(expected);
+    Tree(lines.Single()).Tree.Max(it => it.Z).Should().Be(expected);
   }
 
   [Theory]
@@ -21,30 +21,62 @@ public class Quest14
   public void Part2(string inputFile, int expected)
   {
     var lines = GetInput(inputFile);
-    Dictionary<Point3, long> overlaps = [];
-    foreach(var steps in lines)
-    {
-      foreach(var p in Tree(steps))
-      {
-        overlaps[p] = overlaps.GetValueOrDefault(p) + 1;
-      }
-    }
-    overlaps.Count.Should().Be(expected);
+    HashSet<Point3> tree = [.. lines.SelectMany(it => Tree(it).Tree)];
+    tree.Count.Should().Be(expected);
   }
 
-  HashSet<Point3> Tree(List<Step> steps)
+  [Theory]
+  [InlineData("Quest14.3.Sample.1.txt", 5)]
+  [InlineData("Quest14.3.Sample.2.txt", 46)]
+  [InlineData("Quest14.3.txt", 1752)]
+  public void Part3(string inputFile, int expected)
   {
-    HashSet<Point3> result = [];
-    var current = Point3.Zero;
-    foreach(var step in steps)
+    var lines = GetInput(inputFile);
+    HashSet<Point3> tree = [.. lines.SelectMany(it => Tree(it).Tree)];
+    HashSet<Point3> leaves = [.. lines.Select(it => Tree(it).Leaf)];
+    tree.Where(it => it.X == 0 && it.Y == 0)
+      .Min(trunk => leaves.Select(leaf => SegmentsTo(tree, trunk, leaf)).Sum())
+      .Should().Be(expected);
+  }
+
+  static long SegmentsTo(HashSet<Point3> tree, Point3 trunk, Point3 leaf)
+  {
+    Dictionary<Point3, long> closed = [];
+    closed[trunk] = 0;
+    Queue<Point3> open = [];
+    open.Enqueue(trunk);
+
+    while (open.TryDequeue(out var current))
     {
-      for(long i = 0; i < step.Scalar; i++)
+      foreach (var v in new[] { Vector3.Down, Vector3.East, Vector3.Up, Vector3.West, Vector3.North, Vector3.South })
       {
-        current += step.V;
-        result.Add(current);
+        var p2 = current + v;
+        var d = closed[current] + 1;
+        if (p2 == leaf) return d;
+        if (!tree.Contains(p2)) continue;
+        if (closed.GetValueOrDefault(p2, long.MaxValue) <= d) continue;
+        closed[p2] = d;
+        open.Enqueue(p2);
       }
     }
-    return result;
+
+    throw new ApplicationException();
+  }
+
+  (HashSet<Point3> Tree, Point3 Leaf) Tree(List<Step> steps)
+  {
+    HashSet<Point3> tree = [];
+    HashSet<Point3> leaves = [];
+    var current = Point3.Zero;
+    foreach (var step in steps)
+    {
+      for (long i = 0; i < step.Scalar; i++)
+      {
+        current += step.V;
+        tree.Add(current);
+      }
+    }
+    return (tree, current);
   }
 
   public record Step(Vector3 V, long Scalar);
