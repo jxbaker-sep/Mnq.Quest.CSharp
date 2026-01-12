@@ -1,4 +1,6 @@
+using System.Net.Http.Headers;
 using FluentAssertions;
+using Microsoft.Z3;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
 using Utils;
@@ -14,43 +16,146 @@ public class Quest15
   [Theory]
   [InlineData("Quest15.1.Sample.txt", 26)]
   [InlineData("Quest15.1.txt", 204)]
-    [InlineData("Quest15.2.Sample.txt", 38)]
+  [InlineData("Quest15.2.Sample.txt", 38)]
   [InlineData("Quest15.2.txt", 520)]
   public void Part1(string inputFile, int expected)
   {
     var grid = GetInput(inputFile);
 
-    Solve1(grid).Should().Be(expected);
+    Solve2(grid).Should().Be(expected);
   }
 
+  [Theory]
+  [InlineData("Quest15.3.txt", 1510)]
+  public void Part3(string inputFile, int expected)
+  {
+    var grid = GetInput(inputFile);
 
-  static long Solve1(Grid<char> grid)
+    Solve2(grid).Should().Be(expected);
+  }
+
+  long Solve2(Grid<char> grid)
   {
     var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
-    var goal = grid.Items().Select(it => it.Value).Where(h => h != Wall && h != Lake).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
-    Dictionary<(Point Point, string Key), long> closed = [];
-    closed[(start, "")] = 0;
-    Queue<(Point Point, string Key)> open = [];
-    open.Enqueue((start, ""));
+    grid[start] = 'S';
+    var herbSpaces = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).ToHashSet();
+    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join();
+    Dictionary<Point, Dictionary<char, List<(Point Point, long Distance)>>> herbDistances = [];
+
+    foreach (var herbSpace in herbSpaces)
+    {
+      herbDistances[herbSpace.Point] = Solve1(grid, herbSpace.Point);
+    }
+
+    return Solve3(herbDistances, herbs, start);
+  }
+
+  private readonly Dictionary<(Point, string), long> Cache = [];
+  private long Solve3(Dictionary<Point, Dictionary<char, List<(Point Point, long Distance)>>> herbDistances, string herbs, Point start)
+  {
+    if (herbs.Length == 0) return 0;
+    var key = (start, herbs);
+    if (Cache.TryGetValue((key), out var needle)) return needle;
+
+    if (herbs == "S")
+    {
+      var result = herbDistances[start]['S'].Min(it => it.Distance);
+      Cache[key] = result;
+      return result;
+    }
+
+    var found = long.MaxValue;
+    foreach (var remainingHerb in herbs.Where(it => it != 'S'))
+    {
+      var nextHerbs = herbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join();
+      foreach (var herbPoint in herbDistances[start][remainingHerb])
+      {
+        if (herbPoint.Distance >= found) continue;
+        var recursive = Solve3(herbDistances, nextHerbs, herbPoint.Point);
+        found = Math.Min(found, recursive + herbPoint.Distance);
+      }
+    }
+
+    Cache[key] = found;
+    return found;
+  }
+
+  static long Solve(Grid<char> grid)
+  {
+    var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
+    grid[start] = 'S';
+    var herbSpaces = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).ToHashSet();
+    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join();
+    Dictionary<Point, Dictionary<char, List<(Point Point, long Distance)>>> herbDistances = [];
+
+    foreach (var herbSpace in herbSpaces)
+    {
+      herbDistances[herbSpace.Point] = Solve1(grid, herbSpace.Point);
+    }
+
+    PriorityQueue<(Point Point, string RemainingHerbs, long Distance)> open = new(it => it.Distance + it.Point.ManhattanDistance(start) + it.RemainingHerbs.Length - 1);
+    open.Enqueue((start, herbs, 0));
+
+    Dictionary<(Point Point, string RemainingHerbs), long> closed = [];
+    closed[(start, herbs)] = 0;
+
+    // long found = long.MaxValue;
 
     while (open.TryDequeue(out var current))
     {
-      foreach (var neighbor in current.Point.CardinalNeighbors())
+      // Console.WriteLine($"{found} {open.Count}");
+      if (current.RemainingHerbs == "") return current.Distance;
+      var goingHome = current.RemainingHerbs == "S";
+      // if (current.Distance >= found) continue;
+      foreach (var remainingHerb in current.RemainingHerbs.Where(it => goingHome || it != 'S'))
+      {
+        var nextKey = current.RemainingHerbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join();
+        foreach (var herbPoint in herbDistances[current.Point][remainingHerb])
+        {
+          var d = current.Distance + herbPoint.Distance;
+          // if (d >= found) continue;
+          if (closed.GetValueOrDefault((herbPoint.Point, nextKey), long.MaxValue) <= d) continue;
+          closed[(herbPoint.Point, nextKey)] = d;
+          if (nextKey == "")
+          {
+            // return d;
+            // found = Math.Min(found, d);
+
+            // continue;
+          }
+          open.Enqueue((herbPoint.Point, nextKey, d));
+        }
+      }
+    }
+
+    // return found;
+    throw new ApplicationException();
+  }
+
+  static Dictionary<char, List<(Point Point, long Distance)>> Solve1(Grid<char> grid, Point start)
+  {
+    Dictionary<char, List<(Point Point, long Distance)>> result = [];
+    Dictionary<Point, long> closed = [];
+    closed[start] = 0;
+    Queue<Point> open = [];
+    open.Enqueue(start);
+
+    while (open.TryDequeue(out var current))
+    {
+      foreach (var neighbor in current.CardinalNeighbors())
       {
         var d = closed[current] + 1;
         var cell = grid.Get(neighbor, Wall);
         if (cell == Wall || cell == Lake) continue;
-        if (neighbor == start && current.Key != goal) continue;
-        if (neighbor == start && current.Key == goal) return d;
-        var nextKey = (current.Key + cell).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
-        if (closed.GetValueOrDefault((neighbor, nextKey), long.MaxValue) <= d) continue;
-        closed[(neighbor, nextKey)] = d;
-        open.Enqueue((neighbor, nextKey));
+        if (closed.GetValueOrDefault(neighbor, long.MaxValue) <= d) continue;
+        closed[neighbor] = d;
+        open.Enqueue(neighbor);
+        result[cell] = result.GetValueOrDefault(cell) ?? [];
+        result[cell].Add((neighbor, d));
       }
     }
 
-    // return closed[(start, goal)];
-    throw new ApplicationException();
+    return result;
   }
 
   private static Grid<char> GetInput(string inputFile)
