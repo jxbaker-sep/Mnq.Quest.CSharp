@@ -8,6 +8,7 @@ namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 public class Quest15
 {
   const char Wall = '#';
+  const char Lake = '~';
   const char Open = '.';
 
   [Theory]
@@ -22,7 +23,7 @@ public class Quest15
 
   [Theory]
   [InlineData("Quest15.2.Sample.txt", 38)]
-  [InlineData("Quest15.2.txt", 0)]
+  [InlineData("Quest15.2.txt", 520)]
   public void Part2(string inputFile, int expected)
   {
     var grid = GetInput(inputFile);
@@ -34,7 +35,7 @@ public class Quest15
   static long Solve1(Grid<char> grid)
   {
     var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
-    var goal = grid.Items().Select(it => it.Value).Where(h => h != Wall).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
+    var goal = grid.Items().Select(it => it.Value).Where(h => h != Wall && h != Lake).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
     Dictionary<(Point Point, string Key), long> closed = [];
     closed[(start, "")] = 0;
     Queue<(Point Point, string Key)> open = [];
@@ -46,7 +47,7 @@ public class Quest15
       {
         var d = closed[current] + 1;
         var cell = grid.Get(neighbor, Wall);
-        if (cell == Wall) continue;
+        if (cell == Wall || cell == Lake) continue;
         if (neighbor == start && current.Key != goal) continue;
         if (neighbor == start && current.Key == goal) return d;
         var nextKey = (current.Key + cell).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
