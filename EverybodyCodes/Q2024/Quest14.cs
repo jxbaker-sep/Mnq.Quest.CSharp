@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
+using Utils;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
@@ -34,6 +35,7 @@ public class Quest14
     var lines = GetInput(inputFile);
     HashSet<Point3> tree = [.. lines.SelectMany(it => Tree(it).Tree)];
     HashSet<Point3> leaves = [.. lines.Select(it => Tree(it).Leaf)];
+
     tree.Where(it => it.X == 0 && it.Y == 0)
       .Min(trunk => leaves.Select(leaf => SegmentsTo(tree, trunk, leaf)).Sum())
       .Should().Be(expected);
@@ -43,20 +45,21 @@ public class Quest14
   {
     Dictionary<Point3, long> closed = [];
     closed[trunk] = 0;
-    Queue<Point3> open = [];
+    // Queue<Point3> open = [];
+    PriorityQueue<Point3> open = new(it => closed[it] + it.ManhattanDistance(leaf));
     open.Enqueue(trunk);
 
     while (open.TryDequeue(out var current))
     {
       foreach (var v in new[] { Vector3.Down, Vector3.East, Vector3.Up, Vector3.West, Vector3.North, Vector3.South })
       {
-        var p2 = current + v;
+        var neighbor = current + v;
         var d = closed[current] + 1;
-        if (p2 == leaf) return d;
-        if (!tree.Contains(p2)) continue;
-        if (closed.GetValueOrDefault(p2, long.MaxValue) <= d) continue;
-        closed[p2] = d;
-        open.Enqueue(p2);
+        if (neighbor == leaf) return d;
+        if (!tree.Contains(neighbor)) continue;
+        if (closed.GetValueOrDefault(neighbor, long.MaxValue) <= d) continue;
+        closed[neighbor] = d;
+        open.Enqueue(neighbor);
       }
     }
 
