@@ -77,7 +77,71 @@ public class Quest15
     }
 
     Cache[key] = found;
+    Console.WriteLine(Cache.Count);
     return found;
+  }
+
+
+  [Theory]
+  [InlineData("Quest15.1.Sample.txt", 26)]
+  [InlineData("Quest15.1.txt", 204)]
+  [InlineData("Quest15.2.Sample.txt", 38)]
+  [InlineData("Quest15.2.txt", 520)]
+  public void Part4(string inputFile, int expected)
+  {
+    var grid = GetInput(inputFile);
+
+    Solve5(grid).Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData("Quest15.3.txt", 1510)]
+  public void Part5(string inputFile, int expected)
+  {
+    var grid = GetInput(inputFile);
+
+    Solve5(grid).Should().Be(expected);
+  }
+
+  private long Solve5(Grid<char> grid)
+  {
+    var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
+    grid[start] = 'S';
+    var points = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).GroupToDictionary(it => it.Value, it => it.Point);
+    var herbs = points.Keys.OrderBy(it => it).Join();
+    Dictionary<(Point, Point), long> distances = [];
+
+    foreach(var point in points.SelectMany(it => it.Value))
+    {
+      var temp = PointToPoints(grid, point);
+      foreach(var p in temp) distances[p.Key] = p.Value;
+    }
+
+    return Solve4(distances, points, herbs).Min(it => it.LaterDistance + distances[(it.Point, start)]);
+  }
+
+  private readonly Dictionary<string, List<(Point Point, long LaterDistance)>> Cache2 = [];
+  private List<(Point Point, long LaterDistance)> Solve4(Dictionary<(Point, Point), long> distances,
+    Dictionary<char, List<Point>> points, string herbs)
+  {
+    if (herbs == "") throw new ApplicationException();
+    if (herbs == "S") return [(points['S'][0], 0)];
+    if (Cache2.TryGetValue(herbs, out var needle)) return needle;
+
+    List<(Point Point, long LaterDistance)> result = [];
+    foreach (var herb in herbs.Where(it => it != 'S'))
+    {
+      var remainder = herbs.Where(it => it != herb).Join();
+      var recursive = Solve4(distances, points, remainder);
+      foreach (var point in points[herb])
+      {
+        result.Add((point, recursive.Min(r2 => distances[(r2.Point, point)] + r2.LaterDistance)));
+      }
+    }
+
+    // Console.WriteLine($"{herbs} {result.Count}");
+    Cache2[herbs] = result;
+    return result;
   }
 
   static long Solve(Grid<char> grid)
@@ -152,6 +216,36 @@ public class Quest15
         open.Enqueue(neighbor);
         result[cell] = result.GetValueOrDefault(cell) ?? [];
         result[cell].Add((neighbor, d));
+      }
+    }
+
+    return result;
+  }
+
+  
+
+  static Dictionary<(Point, Point), long> PointToPoints(Grid<char> grid, Point start)
+  {
+    Dictionary<(Point, Point), long> result = [];
+    Dictionary<Point, long> closed = [];
+    closed[start] = 0;
+    Queue<Point> open = [];
+    open.Enqueue(start);
+
+    while (open.TryDequeue(out var current))
+    {
+      foreach (var neighbor in current.CardinalNeighbors())
+      {
+        var d = closed[current] + 1;
+        var cell = grid.Get(neighbor, Wall);
+        if (cell == Wall || cell == Lake) continue;
+        if (closed.GetValueOrDefault(neighbor, long.MaxValue) <= d) continue;
+        closed[neighbor] = d;
+        open.Enqueue(neighbor);
+        if (cell != Open)
+        {
+          result[(start, neighbor)] = d;
+        }
       }
     }
 
