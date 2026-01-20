@@ -109,16 +109,17 @@ public class Quest16
     open.Push((zeroes, totalPulls, true));
 
     string createKey(List<int> current, int pulls, bool allowLeftLever) => current.Join(',') + $"{pulls}" + $"{allowLeftLever}";
-    while (open.TryPop(out var temp))
+    while (open.TryPeek(out var temp))
     {
       var (current, pulls, allowLeftLever) = temp;
       var key = createKey(current, pulls, allowLeftLever);
 
-      if (closed.ContainsKey(key)) continue;
+      if (closed.ContainsKey(key)){ open.Pop(); continue;}
 
       if (pulls == 0)
       {
         closed[key] = (0, 0);
+        open.Pop();
         continue;
       }
 
@@ -140,14 +141,12 @@ public class Quest16
           }
           else
           {
-            open.Push(temp);
             open.Push((c1, pulls, false));
             ok = false;
-            break;
           }
         }
 
-        if (ok) closed[key] = (max, min);
+        if (ok) {closed[key] = (max, min); open.Pop();}
         continue;
       }
 
@@ -158,10 +157,10 @@ public class Quest16
       {
         var myScore = ComputeScore(current);
         closed[key] = (myScore + found2.max, myScore + found2.min);
+        open.Pop();
       }
       else
       {
-        open.Push(temp);
         open.Push(([..current], pulls - 1, true));
       }
     }
