@@ -85,6 +85,85 @@ public class Quest16
     DoPart3(current, pulls, true).Should().Be((expectedMax, expectedMin));
   }
 
+  [Theory]
+  [InlineData("Quest16.3.Sample.txt", 1, 4, 1)]
+  [InlineData("Quest16.3.Sample.txt", 2, 6, 1)]
+  [InlineData("Quest16.3.Sample.txt", 3, 9, 2)]
+  [InlineData("Quest16.3.Sample.txt", 10, 26, 5)]
+  [InlineData("Quest16.3.Sample.txt", 100, 246, 50)]
+  [InlineData("Quest16.3.Sample.txt", 256, 627, 128)]
+  [InlineData("Quest16.3.Sample.txt", 1000, 2446, 500)]
+  [InlineData("Quest16.3.Sample.txt", 2024, 4948, 1012)] // too much recursion
+  [InlineData("Quest16.3.txt", 256, 630, 72)]
+  public void Part4(string inputFile, int totalPulls, long expectedMax, long expectedMin)
+  {
+    GetInput(inputFile);
+
+    var zeroes = StepsPerPull.Select(_ => 0).ToList();
+
+    IncrementAll = [.. StepsPerPull.Select(_ => 1)];
+    DecrementAll = [.. StepsPerPull.Select(_ => -1)];
+
+    Stack<(List<int> current, int pulls, bool allowLeftLever)> open = [];
+    Dictionary<string, (long max, long min)> closed = [];
+    open.Push((zeroes, totalPulls, true));
+
+    string createKey(List<int> current, int pulls, bool allowLeftLever) => current.Join(',') + $"{pulls}" + $"{allowLeftLever}";
+    while (open.TryPop(out var temp))
+    {
+      var (current, pulls, allowLeftLever) = temp;
+      var key = createKey(current, pulls, allowLeftLever);
+
+      if (closed.ContainsKey(key)) continue;
+
+      if (pulls == 0)
+      {
+        closed[key] = (0, 0);
+        continue;
+      }
+
+      if (allowLeftLever)
+      {
+        List<int> c1 = [..current];
+        List<int> c2 = IncrementWheels(IncrementAll, [..current]);
+        List<int> c3 = IncrementWheels(DecrementAll, [..current]);
+        var k1 = createKey(c1, pulls, false);
+        var k2 = createKey(c2, pulls, false);
+        var k3 = createKey(c3, pulls, false);
+        if (closed.TryGetValue(k1, out var d1) && closed.TryGetValue(k2, out var d2) && closed.TryGetValue(k3, out var d3))
+        {
+          List<(long max, long min)> l = [d1, d2, d3];
+          closed[key] = (l.Max(it => it.max), l.Min(it => it.min));
+        }
+        else
+        {
+          open.Push(temp);
+          open.Push((c1, pulls, false));
+          open.Push((c2, pulls, false));
+          open.Push((c3, pulls, false));
+        }
+        continue;
+      }
+
+      current = IncrementWheels(StepsPerPull, [.. current]);
+
+      var key2 = createKey([..current], pulls - 1, true);
+      if (closed.TryGetValue(key2, out var found2))
+      {
+        var myScore = ComputeScore(current);
+        closed[key] = (myScore + found2.max, myScore + found2.min);
+      }
+      else
+      {
+        open.Push(temp);
+        open.Push(([..current], pulls - 1, true));
+      }
+    }
+
+    var firstKey = zeroes.Join(',') + $"{totalPulls}" + $"{true}";
+    closed[firstKey].Should().Be((expectedMax, expectedMin));
+  }
+
   Dictionary<string, (long, long)> Cache = [];
   List<int> IncrementAll = [];
   List<int> DecrementAll = [];
@@ -100,7 +179,7 @@ public class Quest16
 
     if (allowLeftLever)
     {
-      var l = new[]{ 
+      var l = new[]{
         DoPart3([..current], pulls, false),
         DoPart3(IncrementWheels(IncrementAll, [..current]), pulls, false),
         DoPart3(IncrementWheels(DecrementAll, [..current]), pulls, false)
@@ -110,15 +189,15 @@ public class Quest16
 
     var key = current.Join(',') + $"{pulls}";
     if (Cache.TryGetValue(key, out var found)) return found;
-    current = IncrementWheels(StepsPerPull, [..current]);
+    current = IncrementWheels(StepsPerPull, [.. current]);
 
     var myScore = ComputeScore(current);
     var recursive = DoPart3(current, pulls - 1, true);
-    var result =  (myScore + recursive.max, myScore + recursive.min);
+    var result = (myScore + recursive.max, myScore + recursive.min);
     Cache[key] = result;
     return result;
   }
-  
+
 
 
 
