@@ -82,7 +82,7 @@ public class Quest16
 
     IncrementAll = [.. StepsPerPull.Select(_ => 1)];
     DecrementAll = [.. StepsPerPull.Select(_ => -1)];
-    DoPart3Max(current, pulls, true).Should().Be((expectedMax, expectedMin));
+    DoPart3(current, pulls, true).Should().Be((expectedMax, expectedMin));
   }
 
   Dictionary<string, (long, long)> Cache = [];
@@ -91,7 +91,7 @@ public class Quest16
   List<int> StepsPerPull = [];
   List<List<string>> Wheels = [];
 
-  private (long max, long min) DoPart3Max(List<int> current, long pulls, bool allowLeftLever)
+  private (long max, long min) DoPart3(List<int> current, long pulls, bool allowLeftLever)
   {
     if (pulls == 0)
     {
@@ -101,9 +101,9 @@ public class Quest16
     if (allowLeftLever)
     {
       var l = new[]{ 
-        DoPart3Max([..current], pulls, false),
-        DoPart3Max(IncrementWheels(IncrementAll, [..current]), pulls, false),
-        DoPart3Max(IncrementWheels(DecrementAll, [..current]), pulls, false)
+        DoPart3([..current], pulls, false),
+        DoPart3(IncrementWheels(IncrementAll, [..current]), pulls, false),
+        DoPart3(IncrementWheels(DecrementAll, [..current]), pulls, false)
       };
       return (l.Max(it => it.max), l.Min(it => it.min));
     }
@@ -113,11 +113,12 @@ public class Quest16
     current = IncrementWheels(StepsPerPull, [..current]);
 
     var myScore = ComputeScore(current);
-    var recursive = DoPart3Max(current, pulls - 1, true);
+    var recursive = DoPart3(current, pulls - 1, true);
     var result =  (myScore + recursive.max, myScore + recursive.min);
     Cache[key] = result;
     return result;
   }
+  
 
 
 
