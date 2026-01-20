@@ -76,7 +76,7 @@ public class Quest05
 
   private static long Shout(List<LinkedList<long>> columns)
   {
-    return Convert.ToInt64(columns.Select(it => $"{it.First!.Value}").Join());
+    return Convert.ToInt64(columns.Select(it => $"{it.First!.Value}").Join(""));
   }
 
   private static long Dance(List<LinkedList<long>> columns, long turn)

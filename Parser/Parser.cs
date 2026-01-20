@@ -14,7 +14,7 @@ public record ParseFailure<T>(string Annotation, char[] Data, int Position) : IP
 {
   public string Message {
     get {
-      return $"{Annotation}: at {Data[Position..].Take(10).Join()}...";
+      return $"{Annotation}: at {Data[Position..].Take(10).Join("")}...";
     }
   }
 

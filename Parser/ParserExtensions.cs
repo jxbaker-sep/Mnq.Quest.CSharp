@@ -76,7 +76,7 @@ public static class ParserExtensions
     return null;
   }
 
-  public static Parser<string> Join<T>(this Parser<List<T>> parser) => parser.Select(it => it.Join());
+  public static Parser<string> Join<T>(this Parser<List<T>> parser, string seperator = "") => parser.Select(it => it.Join(seperator));
 
   public static Parser<T> End<T>(this Parser<T> parser) => parser.Before(P.EndOfInput);
 

@@ -56,7 +56,7 @@ public class ParserTests
         var first = P.Any.Where(IsFirst);
         var subsequent = P.Any.Where(it => IsFirst(it) || char.IsNumber(it));
         var idParser = P.Sequence(first, subsequent.Star())
-            .Select(it => $"{it.First}{it.Second.Join()}");
+            .Select(it => $"{it.First}{it.Second.Join("")}");
         idParser.Parse("_").Should().Be("_");
         idParser.Invoking(it => it.Parse("")).Should().Throw<ApplicationException>();
         idParser.Invoking(it => it.Parse("123asdasd_")).Should().Throw<ApplicationException>();
@@ -270,7 +270,7 @@ public class ParserTests
     [Fact]
     public void UntilTest()
     {
-        var anyThenDo = P.Any.Until(P.String("do()")).Select(it => it.Accumulator.Join() + it.Sentinel);
+        var anyThenDo = P.Any.Until(P.String("do()")).Select(it => it.Accumulator.Join("") + it.Sentinel);
         var x = 
         P.Sequence(
             P.String("don't()"),
@@ -292,7 +292,7 @@ public class ParserTests
     public void PoMatcherTest(string format)
     {
         Random rnd = new();
-        var actual = format.Select(it => it != 'n' ? (char)it : (char)((char)rnd.Next(0,10) + '0')).Join();
+        var actual = format.Select(it => it != 'n' ? (char)it : (char)((char)rnd.Next(0,10) + '0')).Join("");
 
         var parser = P.Sequence(
             P.String("PO"), 

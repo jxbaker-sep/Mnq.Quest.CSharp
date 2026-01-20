@@ -27,7 +27,7 @@ public class Quest02
   {
     var input = GetInput(inputFile);
     int sum = 0;
-    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join())];
+    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join(""))];
     foreach (var inscription in input.Inscription)
     {
       List<int> b = [];
@@ -55,7 +55,7 @@ public class Quest02
 
     Lexicon wordhoard = new();
 
-    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join())];
+    List<string> allRunes = [.. input.Runes, .. input.Runes.Select(it => it.Reverse().Join(""))];
     foreach (var rune in allRunes)
     {
       wordhoard.Add(rune);

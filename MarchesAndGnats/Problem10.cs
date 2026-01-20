@@ -23,9 +23,9 @@ public class Problem10
     Program ??= new();
 
     var count = 500;
-    var input = Enumerable.Repeat("a+", count).Join() + "a";
+    var input = Enumerable.Repeat("a+", count).Join("") + "a";
     var result = new LogicMill(Program.Join()).RunToHalt(input);
-    var expected = Enumerable.Repeat("|", count + 1).Join();
+    var expected = Enumerable.Repeat("|", count + 1).Join("");
     result.Result.Should().Be(expected);
     Console.WriteLine(result.Steps);
   }
@@ -36,9 +36,9 @@ public class Problem10
     var program = new MyProgramByRules();
 
     var count = 500;
-    var input = Enumerable.Repeat("a+", count).Join() + "a";
+    var input = Enumerable.Repeat("a+", count).Join("") + "a";
     var result = new LogicMill(program.Join()).RunToHalt(input);
-    var expected = Enumerable.Repeat("|", count + 1).Join();
+    var expected = Enumerable.Repeat("|", count + 1).Join("");
     result.Result.Should().Be(expected);
   }
 
@@ -46,7 +46,7 @@ public class Problem10
   {
     public MyProgramByRules()
     {
-      string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join() + "-äöõü";
+      string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join("") + "-äöõü";
       const char newline = '+';
 
       var reverse = CreateState();
@@ -72,7 +72,7 @@ public class Problem10
   {
     public MyProgram()
     {
-      string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join() + "-äöõü";
+      string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join("") + "-äöõü";
       const char plus = '+';
 
       Init.On(lexicon, r => r.Write(Blank));
@@ -92,13 +92,13 @@ public class Problem10
         previous = r;
         r.On(lexicon, r => r.Write(Blank));
         r.Skip(Bar);
-        r.On(Blank, s => s.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Then(Halt)));
+        r.On(Blank, s => s.Write(Enumerable.Repeat(Bar, i).Join(""), after => after.Then(Halt)));
         if (i == max)
         {
           var skipper = CreateState($"Skipper{i}");
           r.On(plus, s => s.Write(Blank).Then(skipper));
           skipper.Skip(lexicon + Bar + plus);
-          skipper.On(Blank, s => s.Write(Enumerable.Repeat(Bar, i).Join(), after => after.Left().Then(reverse)));
+          skipper.On(Blank, s => s.Write(Enumerable.Repeat(Bar, i).Join(""), after => after.Left().Then(reverse)));
         }
       }
 

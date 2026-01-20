@@ -14,7 +14,7 @@ public class Day10
 
   static List<Machine> Parse(string file)
   {
-    var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join());
+    var lightDiagram = P.Format("[{}]", P.Choice(".", "#").Star().Join(""));
     var buttonSchematic = P.Format("({})", P.Int.Star(","));
     var joltageRequirements = P.Format("{{}}", P.Int.Star(","));
 
@@ -152,7 +152,7 @@ public class Day10
 
   static long PressLightButtons(Machine machine)
   {
-    var alloff = Enumerable.Repeat('.', machine.LightDiagram.Length).Join();
+    var alloff = Enumerable.Repeat('.', machine.LightDiagram.Length).Join("");
 
     Queue<(string, long)> open = new([(alloff, 0)]);
     HashSet<string> closed = [alloff];
@@ -174,7 +174,7 @@ public class Day10
   {
     var ca = currentLights.ToCharArray();
     foreach (var i in wireup) ca[i] = ca[i] == '.' ? '#' : '.';
-    return ca.Join();
+    return ca.Join("");
   }
 
   static long Z3SolveForJoltage(Machine machine)

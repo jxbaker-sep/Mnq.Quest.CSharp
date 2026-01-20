@@ -47,7 +47,7 @@ public class Day04
         }
         return a;
       });
-      return temp.Select(it => $"{it.Item1}{it.Item2}").Join();
+      return temp.Select(it => $"{it.Item1}{it.Item2}").Join("");
     }).ToList();
 
     lines.Select(line => line.Sum(it => map[it])).Sum().Should().Be(expected);

@@ -26,7 +26,7 @@ public class Quest07
     var plans = GetInput(inputFile);
     var track = GetTrack(trackFile);
 
-    plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(), track, loops)).Select(it => it[0]).Join("").Should().Be(expected);
+    plans.OrderByDescending(plan => GatherOnTrack(plan.Skip(1).Join(""), track, loops)).Select(it => it[0]).Join("").Should().Be(expected);
   }
 
   [Theory]
@@ -36,7 +36,7 @@ public class Quest07
     var rivalPlan = GetInput("Quest07.3.txt").Single();
     var track = GetTrack("Quest07.3.Track.txt");
 
-    var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(), track, 2024);
+    var rivalScore = GatherOnTrack(rivalPlan.Skip(1).Join(""), track, 2024);
 
     CreateAllPlans(5, 3, 3).LongCount(plan =>
     {

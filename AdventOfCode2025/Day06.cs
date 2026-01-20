@@ -36,7 +36,7 @@ public class Day06
   public void Part2(string inputFile, long expected)
   {
     var lines = AdventOfCode2025Loader.ReadLines(inputFile)
-      .Select(it => it.ToList()).ToList().GridRotateLeft().Select(it => it.Join()).ToList();
+      .Select(it => it.ToList()).ToList().GridRotateLeft().Select(it => it.Join("")).ToList();
 
     var total = 0L;
 
@@ -50,12 +50,12 @@ public class Day06
       }
       else if (line.EndsWith('*'))
       {
-        figures.Add(long.Parse(line[..^1].Join().Trim()));
+        figures.Add(long.Parse(line[..^1].Join("").Trim()));
         total += figures.Product();
       }
       else if (line.EndsWith('+'))
       {
-        figures.Add(long.Parse(line[..^1].Join().Trim()));
+        figures.Add(long.Parse(line[..^1].Join("").Trim()));
         total += figures.Sum();
       }
       else

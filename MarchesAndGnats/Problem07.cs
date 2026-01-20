@@ -11,11 +11,11 @@ public class Problem07 : Program
   public void Part1(string input, string expected)
   {
     const char sentinel = '=';
-    string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join() + "-äöõü";
-    var rhsLexicon = lexicon.Concat(['[', ']']).Join();
+    string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join("") + "-äöõü";
+    var rhsLexicon = lexicon.Concat(['[', ']']).Join("");
     
     var rewind = CreateState("REWIND")
-      .On(rhsLexicon.Append(sentinel).Join(), r => r.Left())
+      .On(rhsLexicon.Append(sentinel).Join(""), r => r.Left())
       .On(Blank, r => r.Then(Init));
 
     Init.On(sentinel, r => r.Write(Blank).Then(Halt));

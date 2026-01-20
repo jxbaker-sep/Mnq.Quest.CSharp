@@ -10,7 +10,7 @@ public class Problem08: Program
   [InlineData("hello-world", "dlrow-olleh")]
   public void Part2(string input, string expected)
   {
-    string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join() + "-äöõü";
+    string lexicon = Enumerable.Range('a', 'z' - 'a' + 1).Select(it => (char)it).Join("") + "-äöõü";
     char sentinel = '=';
     char erased = '.';
 

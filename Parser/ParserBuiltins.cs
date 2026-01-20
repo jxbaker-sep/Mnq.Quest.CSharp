@@ -9,8 +9,8 @@ public static class ParserBuiltins
   public static readonly Parser<char> Letter = Any.Where(char.IsLetter, "IsLetter");
   public static readonly Parser<string> Word = Letter.Plus().Join();
   public static readonly Parser<char> Digit = Any.Where(char.IsNumber, "IsNumber");
-  public static readonly Parser<long> Long = String("-").Optional().Then(Digit.Plus()).Select(it => Convert.ToInt64($"{it.First.FirstOrDefault()}{it.Second.Join()}"));
-  public static readonly Parser<int> Int = String("-").Optional().Then(Digit.Plus()).Select(it => Convert.ToInt32($"{it.First.FirstOrDefault()}{it.Second.Join()}"));
+  public static readonly Parser<long> Long = String("-").Optional().Then(Digit.Plus()).Select(it => Convert.ToInt64($"{it.First.FirstOrDefault()}{it.Second.Join("")}"));
+  public static readonly Parser<int> Int = String("-").Optional().Then(Digit.Plus()).Select(it => Convert.ToInt32($"{it.First.FirstOrDefault()}{it.Second.Join("")}"));
 
   public static readonly Parser<char> Whitespace = Any.Where(char.IsWhiteSpace, "IsWhiteSpace");
 
@@ -30,7 +30,7 @@ public static class ParserBuiltins
   {
     return Parser.From((c, i) =>
     {
-      if (c.Length >= i + s.Length && c[i..(i + s.Length)].Join() == s) return ParseResult.From(s, c, i + s.Length);
+      if (c.Length >= i + s.Length && c[i..(i + s.Length)].Join("") == s) return ParseResult.From(s, c, i + s.Length);
       return new ParseFailure<string>($"expected string {s}", c, i);
     });
   }

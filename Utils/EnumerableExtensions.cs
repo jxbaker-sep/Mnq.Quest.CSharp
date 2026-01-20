@@ -14,6 +14,7 @@ public static class EnumerableExtensions
   public static int Product(this IEnumerable<int> self) => self.Aggregate(1, (a,b) => a * b);
 
   public static string Join<T>(this IEnumerable<T> objects, string joiner = "") => string.Join(joiner, objects);
+  public static string Join<T>(this IEnumerable<T> objects, char joiner = ',') => string.Join(joiner, objects);
 
   public static IEnumerable<List<T>> Windows<T>(this IEnumerable<T> self, int size)
   {

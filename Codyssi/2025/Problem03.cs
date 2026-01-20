@@ -51,7 +51,7 @@ public class Problem03
 
   private static List<ReadingFormat> GetInput(string inputFile)
   {
-    return P.Format("{} {}", (P.Letter | P.Digit).Star().Join(), P.Int)
+    return P.Format("{} {}", (P.Letter | P.Digit).Star().Join(""), P.Int)
       .Select(it => new ReadingFormat(it.First, it.Second))
       .ParseMany(CodyssiLoader.ReadLines(inputFile));
   }

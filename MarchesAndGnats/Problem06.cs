@@ -19,7 +19,7 @@ public class Problem06 : Program
   // [InlineData("||-||", "")]
   // public void Part2(string input, string expected)
   // {
-  //   var result = new LogicMill(new ByRules().Join()).RunToHalt(input);
+  //   var result = new LogicMill(new ByRules().Join("")).RunToHalt(input);
   //   result.Result.Should().Be(expected);
   // }
 
@@ -54,7 +54,7 @@ public class Problem06 : Program
           if (up - written == written)
             writtenState.On(Blank, s => s.Then(Halt));
           else if (up - written < written)
-            writtenState.On(Blank, s => s.Write(Enumerable.Repeat(Bar, written - (up - written)).Join(), after => after.Then(Halt)));
+            writtenState.On(Blank, s => s.Write(Enumerable.Repeat(Bar, written - (up - written)).Join(""), after => after.Then(Halt)));
           else if (up - written > written)
             writtenState.On(Blank, s => s.Left().Then(erase[(up - written) - written]));
         }
@@ -78,7 +78,7 @@ public class Problem06 : Program
       {
         write.Add(CreateState($"down{down}")
           .On(Bar, s => s.Write(Blank).Then(down == 1 ? Halt : write[down - 1]))
-          .On(Blank, s => s.Write(Enumerable.Repeat(Bar, down).Join(), after => after.Then(Halt)))
+          .On(Blank, s => s.Write(Enumerable.Repeat(Bar, down).Join(""), after => after.Then(Halt)))
         );
       }
 

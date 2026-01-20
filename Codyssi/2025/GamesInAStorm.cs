@@ -79,7 +79,7 @@ public class GamesInAStorm
 
   private static List<Line> GetInput(string inputFile)
   {
-    var number = (P.Digit | P.Letter).Plus().Join();
+    var number = (P.Digit | P.Letter).Plus().Join("");
     return P.Format("{} {}", number, P.Long)
       .Select(it => new Line(it.First, it.Second))
       .ParseMany(CodyssiLoader.ReadLines(inputFile));

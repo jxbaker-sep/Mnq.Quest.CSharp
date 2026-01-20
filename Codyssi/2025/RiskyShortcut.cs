@@ -50,7 +50,7 @@ public class RiskyShortcut
         s.Push(c);
       }
     }
-    return s.Join();
+    return s.Join("");
   }
 
   private string Reduce2(string line)
@@ -67,7 +67,7 @@ public class RiskyShortcut
         s.Push(c);
       }
     }
-    return s.Join();
+    return s.Join("");
   }
 
   private static List<string> GetInput(string inputFile)

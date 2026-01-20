@@ -39,7 +39,7 @@ public class Quest15
     var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
     grid[start] = 'S';
     var herbSpaces = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).ToHashSet();
-    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join();
+    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
     Dictionary<Point, Dictionary<char, List<(Point Point, long Distance)>>> herbDistances = [];
 
     foreach (var herbSpace in herbSpaces)
@@ -67,7 +67,7 @@ public class Quest15
     var found = long.MaxValue;
     foreach (var remainingHerb in herbs.Where(it => it != 'S'))
     {
-      var nextHerbs = herbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join();
+      var nextHerbs = herbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join("");
       foreach (var herbPoint in herbDistances[start][remainingHerb])
       {
         if (herbPoint.Distance >= found) continue;
@@ -108,7 +108,7 @@ public class Quest15
     var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
     grid[start] = 'S';
     var points = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).GroupToDictionary(it => it.Value, it => it.Point);
-    var herbs = points.Keys.OrderBy(it => it).Join();
+    var herbs = points.Keys.OrderBy(it => it).Join("");
     Dictionary<(Point, Point), long> distances = [];
 
     foreach(var point in points.SelectMany(it => it.Value))
@@ -131,7 +131,7 @@ public class Quest15
     List<(Point Point, long LaterDistance)> result = [];
     foreach (var herb in herbs.Where(it => it != 'S'))
     {
-      var remainder = herbs.Where(it => it != herb).Join();
+      var remainder = herbs.Where(it => it != herb).Join("");
       var recursive = Solve4(distances, points, remainder);
       foreach (var point in points[herb])
       {
@@ -149,7 +149,7 @@ public class Quest15
     var start = grid.Items().Single(it => it.Point.Y == 0 && it.Value == '.').Point;
     grid[start] = 'S';
     var herbSpaces = grid.Items().Where(h => h.Value != Wall && h.Value != Lake && h.Value != Open).ToHashSet();
-    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join();
+    var herbs = herbSpaces.Select(it => it.Value).ToHashSet().Select(it => $"{it}").OrderBy(it => it).Join("");
     Dictionary<Point, Dictionary<char, List<(Point Point, long Distance)>>> herbDistances = [];
 
     foreach (var herbSpace in herbSpaces)
@@ -173,7 +173,7 @@ public class Quest15
       // if (current.Distance >= found) continue;
       foreach (var remainingHerb in current.RemainingHerbs.Where(it => goingHome || it != 'S'))
       {
-        var nextKey = current.RemainingHerbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join();
+        var nextKey = current.RemainingHerbs.Where(it => it != remainingHerb).Select(it => $"{it}").Join("");
         foreach (var herbPoint in herbDistances[current.Point][remainingHerb])
         {
           var d = current.Distance + herbPoint.Distance;

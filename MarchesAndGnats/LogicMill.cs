@@ -34,7 +34,7 @@ class LogicMill
     var (result, steps) = RunToHaltOnCharList(input);
     while (result.Count > 0 && result[0] == Blank) result = result[1..];
     while (result.Count > 0 && result[^1] == Blank) result = result[..^1];
-    return (result.Join(), steps);
+    return (result.Join(""), steps);
   }
 
   private (List<char>, int) RunToHaltOnCharList(List<char> tape)
@@ -70,7 +70,7 @@ class LogicMill
 
     string TapeToString(List<char> tape)
     {
-      return tape.WithIndices().Select(it => it.Index == TapePosition ? $"{it.Value}←" : $"{it.Value}").Join();
+      return tape.WithIndices().Select(it => it.Index == TapePosition ? $"{it.Value}←" : $"{it.Value}").Join("");
     }
   }
 
@@ -79,7 +79,7 @@ class LogicMill
   {
     var comment = P.Format("//{}", P.Any.Star().Void()).Optional();
     input = input.Where(it => !string.IsNullOrWhiteSpace(it) && comment.Parse(it).Count == 0).ToList();
-    var identifier = P.Sequence(P.Letter, (P.Letter | P.Digit | P.Any.Where(it => it == '_')).Star().Join()).Select(it => it.First + it.Second);
+    var identifier = P.Sequence(P.Letter, (P.Letter | P.Digit | P.Any.Where(it => it == '_')).Star().Join("")).Select(it => it.First + it.Second);
     return P.Format("{} {} {} {} {} {}", identifier, P.Any, identifier, P.Any, P.Choice("L", "R"), comment)
       .Select(it => new TransitionRule(it.First, it.Second, it.Third, it.Fourth, it.Fifth == "L" ? -1 : 1))
       .ParseMany(input);
