@@ -93,7 +93,7 @@ public class Quest16
   [InlineData("Quest16.3.Sample.txt", 100, 246, 50)]
   [InlineData("Quest16.3.Sample.txt", 256, 627, 128)]
   [InlineData("Quest16.3.Sample.txt", 1000, 2446, 500)]
-  [InlineData("Quest16.3.Sample.txt", 2024, 4948, 1012)] // too much recursion
+  [InlineData("Quest16.3.Sample.txt", 2024, 4948, 1012)]
   [InlineData("Quest16.3.txt", 256, 630, 72)]
   public void Part4(string inputFile, int totalPulls, long expectedMax, long expectedMin)
   {
@@ -124,24 +124,30 @@ public class Quest16
 
       if (allowLeftLever)
       {
-        List<int> c1 = [..current];
-        List<int> c2 = IncrementWheels(IncrementAll, [..current]);
-        List<int> c3 = IncrementWheels(DecrementAll, [..current]);
-        var k1 = createKey(c1, pulls, false);
-        var k2 = createKey(c2, pulls, false);
-        var k3 = createKey(c3, pulls, false);
-        if (closed.TryGetValue(k1, out var d1) && closed.TryGetValue(k2, out var d2) && closed.TryGetValue(k3, out var d3))
+        long max = long.MinValue;
+        long min = long.MaxValue;
+        var ok = true;
+        
+        foreach(var item in new[]{[], IncrementAll, DecrementAll})
         {
-          List<(long max, long min)> l = [d1, d2, d3];
-          closed[key] = (l.Max(it => it.max), l.Min(it => it.min));
+          List<int> c1 = item.Count > 0 ? IncrementWheels(item, [.. current]) : [..current];
+          var k1 = createKey(c1, pulls, false);
+          
+          if (closed.TryGetValue(k1, out var d1))
+          {
+            max = Math.Max(d1.max, max);
+            min = Math.Min(d1.min, min);
+          }
+          else
+          {
+            open.Push(temp);
+            open.Push((c1, pulls, false));
+            ok = false;
+            break;
+          }
         }
-        else
-        {
-          open.Push(temp);
-          open.Push((c1, pulls, false));
-          open.Push((c2, pulls, false));
-          open.Push((c3, pulls, false));
-        }
+
+        if (ok) closed[key] = (max, min);
         continue;
       }
 
