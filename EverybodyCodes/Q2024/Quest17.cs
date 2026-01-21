@@ -19,10 +19,20 @@ public class Quest17
   {
     var stars = GetInput(inputFile);
 
-    (StarSearch(stars) + stars.Count).Should().Be(expected);
+    (StarSearch(stars, long.MaxValue).First() + stars.Count).Should().Be(expected);
   }
 
-  private static long StarSearch(Stars stars)
+  [Theory]
+  [InlineData("Quest17.3.Sample.txt", 15624)]
+  // [InlineData("Quest17.3.txt", 0)]
+  public void Part3(string inputFile, long expected)
+  {
+    var stars = GetInput(inputFile);
+
+    StarSearch(stars, 6).OrderByDescending(it => it).Take(3).Product().Should().Be(expected);
+  }
+
+  private static IEnumerable<long> StarSearch(Stars stars, long maxDistance)
   {
     List<(Point Star1, Point Star2, long Distance)> mds = [];
     for (var i = 0; i < stars.Count - 1; i++)
@@ -34,24 +44,33 @@ public class Quest17
     }
 
     long total = 0;
-    HashSet<Point> closed = [];
-    HashSet<Point> open = [..stars];
+    HashSet<Point> constellation = [];
+    HashSet<Point> available = [..stars];
 
-    while (open.Count > 0)
+    while (available.Count > 0)
     {
       var (Star1, Star2, Distance) = mds
-        .Where(it => open.Contains(it.Star1) || open.Contains(it.Star2))
-        .Where(it => closed.Count == 0 || closed.Contains(it.Star1) || closed.Contains(it.Star2))
+        .Where(it => available.Contains(it.Star1) || available.Contains(it.Star2))
+        .Where(it => constellation.Count == 0 || constellation.Contains(it.Star1) || constellation.Contains(it.Star2))
         .MinBy(it => it.Distance);
-      closed.Add(Star1);
-      closed.Add(Star2);
-      open.Remove(Star1);
-      open.Remove(Star2);
+
+      if (Distance >= maxDistance || constellation.Any(it => it.ManhattanDistance(Star1) >= maxDistance || it.ManhattanDistance(Star2) >= maxDistance))
+      {
+        yield return total;
+        total = 0;
+        constellation.Clear();
+      }
+      
+      constellation.Add(Star1);
+      constellation.Add(Star2);
+      available.Remove(Star1);
+      available.Remove(Star2);
       total += Distance;
     }
 
-    return total;
+    if (total > 0) yield return total;
   }
+
 
   public record Entry(Stars Open, Stars Closed, long Connections);
 
