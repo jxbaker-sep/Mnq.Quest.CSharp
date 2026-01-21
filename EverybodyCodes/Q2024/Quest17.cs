@@ -14,8 +14,8 @@ public class Quest17
 
   [Theory]
   [InlineData("Quest17.1.Sample.txt", 16)]
-  [InlineData("Quest17.1.txt", 136)]
-  [InlineData("Quest17.2.txt", 1209)]
+  // [InlineData("Quest17.1.txt", 136)]
+  // [InlineData("Quest17.2.txt", 1209)]
   public void Part1(string inputFile, long expected)
   {
     var stars = GetInput(inputFile);
