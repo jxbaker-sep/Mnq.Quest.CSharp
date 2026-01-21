@@ -54,13 +54,12 @@ public class Quest17
     LinkedList<(Point Star1, Point Star2, long Distance)> ll = new(mdsTemp);
 
     long total = 0;
-    HashSet<Point> constellation = [];
     HashSet<Point> available = [..stars];
 
     while (available.Count > 0)
     {
       (Point Star1, Point Star2, long Distance) found;
-      if (constellation.Count == 0)
+      if (total == 0)
       {
         var node = ll.Nodes()
                    .First(it => available.Contains(it.Value.Star1) && available.Contains(it.Value.Star2));
@@ -72,6 +71,7 @@ public class Quest17
         }
         ll.Remove(node);
         found = node.Value;
+        total += 2;
       }
       else
       {
@@ -81,23 +81,21 @@ public class Quest17
                    .Take(1).ToList();
         if (nodes.Count == 0)
         {
-          yield return total + constellation.Count;
-          constellation.Clear();
+          yield return total;
           total = 0;
           continue;
         }
         ll.Remove(nodes[0]);
         found = nodes[0].Value;
+        total += 1;
       }
 
-      constellation.Add(found.Star1);
-      constellation.Add(found.Star2);
       available.Remove(found.Star1);
       available.Remove(found.Star2);
       total += found.Distance;
     }
 
-    if (total > 0) yield return total + constellation.Count;
+    if (total > 0) yield return total;
   }
 
 
