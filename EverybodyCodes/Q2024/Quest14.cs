@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
-using Utils;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 

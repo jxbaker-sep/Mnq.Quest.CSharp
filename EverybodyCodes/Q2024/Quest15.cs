@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using FluentAssertions;
-using Microsoft.Z3;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
 using Utils;

@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using FluentAssertions;
-using MathNet.Numerics;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
 using Utils;
