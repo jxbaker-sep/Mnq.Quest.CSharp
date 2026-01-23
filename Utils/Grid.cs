@@ -52,5 +52,8 @@ public class Grid<T>
 
   public IEnumerable<Point> Points() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => new Point(x, y)));
 
+  public IEnumerable<Point> Points(Func<Point, T, bool> filter) => Items().Where(x => filter(x.Point, x.Value)).Select(it => it.Point);
+
+
   public IEnumerable<(Point Point, T Value)> Items() => MiscUtils.LongRange(0, Height).SelectMany(y => MiscUtils.LongRange(0, Width).Select(x => (Key: new Point(x, y), Value: this[new Point(x, y)])));
 }

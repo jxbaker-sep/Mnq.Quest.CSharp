@@ -14,6 +14,8 @@ public class Quest18
   [Theory]
   [InlineData("Quest18.1.Sample.txt", 11)]
   [InlineData("Quest18.1.txt", 119)]
+  [InlineData("Quest18.2.Sample.txt", 21)]
+  [InlineData("Quest18.2.txt", 1837)]
   public void Part1(string inputFile, long expected)
   {
     var grid = GetInput(inputFile);
@@ -23,15 +25,14 @@ public class Quest18
 
   private long Paint(Grid<char> grid)
   {
-    var first = new Point(0, 1);
+    var firsts = grid.Points((point, value) => value == Open && (point.X == 0 || point.X == grid.Width - 1 ));
 
-    var unwatered = grid.Items().Where(it => it.Value == 'P').Select(it => it.Point).ToHashSet();
+    var unwatered = grid.Points((_, value) => value == 'P').ToHashSet();
     Dictionary<Point, long> watered = [];
 
-    Dictionary<Point, long> closed = [];
-    closed[first] = 0;
+    Dictionary<Point, long> closed = firsts.ToDictionary(it => it, _ => 0L);
 
-    Queue<Point> open = new([first]);
+    Queue<Point> open = new(firsts);
 
     while (watered.Count < unwatered.Count && open.TryDequeue(out var current))
     {
