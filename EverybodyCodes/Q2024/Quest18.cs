@@ -2,6 +2,7 @@ using System.Diagnostics;
 using FluentAssertions;
 using Mng.Quest.CSharp.Utils;
 using Mnq.Quest.CSharp.EverybodyCodes;
+using Utils;
 
 namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 
@@ -21,9 +22,7 @@ public class Quest18
   {
     var grid = GetInput(inputFile);
 
-    List<Point> firsts = [.. grid.Points((point, value) => value == Open && (point.X == 0 || point.X == grid.Width - 1))];
-
-    Paint(grid, firsts).Should().Be(expected);
+    Paint(grid).Should().Be(expected);
   }
 
   [Theory]
@@ -33,24 +32,13 @@ public class Quest18
   {
     var grid = GetInput(inputFile);
 
-    long min = long.MaxValue;
-    List<Point> firsts = [.. grid.Points((point, value) => value == Open)];
-    var i = 0;
-    Stopwatch sw = new();
-    sw.Start();
-    foreach (var first in firsts)
-    {
-      i += 1;
-      var item = Paint(grid, [first], min, true);
-      Console.WriteLine($"{i}/{firsts.Count} {sw.ElapsedMilliseconds} {firsts.Count * sw.ElapsedMilliseconds / i}");
-      min = Math.Min(min, item);
-    }
-
-    min.Should().Be(expected);
+    Paint2(grid).Should().Be(expected);
   }
 
-  private static long Paint(Grid<char> grid, List<Point> firsts, long maxValue = long.MaxValue, bool wantSum = false)
+  private static long Paint(Grid<char> grid)
   {
+    List<Point> firsts = [.. grid.Points((point, value) => value == Open && (point.X == 0 || point.X == grid.Width - 1))];
+
     var allPlants = grid.Points((_, value) => value == 'P').ToHashSet();
     Dictionary<Point, long> watered = [];
 
@@ -58,7 +46,6 @@ public class Quest18
 
     Queue<Point> open = new(firsts);
     var remaining = allPlants.Count;
-    long currentSum = 0;
 
     while (watered.Count < allPlants.Count && open.TryDequeue(out var current))
     {
@@ -72,19 +59,95 @@ public class Quest18
         {
           if (!watered.ContainsKey(neighbor)) remaining -= 1;
           watered[neighbor] = d + 1;
-          currentSum = watered.Values.Sum();
           if (remaining == 0)
           {
-            if (!wantSum) return watered.Values.Max();
-            return watered.Values.Sum();
+            return watered.Values.Max();
           }
         }
         closed[neighbor] = d + 1;
         open.Enqueue(neighbor);
-        var estimatedSum = currentSum + (d + 2) * remaining;
-          ;
-        if (estimatedSum >= maxValue) return maxValue;
       }
+    }
+
+    throw new ApplicationException();
+  }
+
+  private static long Paint2(Grid<char> grid)
+  {
+    List<Point> firsts = [.. grid.Points((point, value) => value == Open)];
+
+    LinkedList<IEnumerator<(long, bool)>> searches = [];
+
+    foreach(var first in firsts)
+    {
+      var x = PaintStepable(grid, first).GetEnumerator();
+      searches.AddLast(x);
+    }
+
+    long found = long.MaxValue;
+    while (searches.Count > 0)
+    {
+      for(var search = searches.First; search != null; )
+      {
+        if (!search.Value.MoveNext()) throw new ApplicationException();
+        var (estimate, done) = search.Value.Current;
+        if (done)
+        {
+          found = Math.Min(found, estimate);
+          var temp = search.Next;
+          searches.Remove(search);
+          search = temp;
+          continue;
+        }
+        if (estimate >= found)
+        {
+          var temp = search.Next;
+          searches.Remove(search);
+          search = temp;
+          continue;
+        }
+        search = search.Next;
+      }
+    }
+
+    return found;
+  }
+
+  private static IEnumerable<(long Estimate, bool Done)> PaintStepable(Grid<char> grid, Point first)
+  {
+    var allPlants = grid.Points((_, value) => value == 'P').ToHashSet();
+    Dictionary<Point, long> watered = [];
+
+    Dictionary<Point, long> closed = [];
+    closed[first] = 0;
+
+    Queue<Point> open = new([first]);
+    var unwatered = allPlants.Count;
+    var sofar = 0L;
+
+    while (watered.Count < allPlants.Count && open.TryDequeue(out var current))
+    {
+      var d = closed[current];
+      foreach (var neighbor in current.CardinalNeighbors())
+      {
+        var nv = grid.Get(neighbor, Wall);
+        if (nv == Wall) continue;
+        if (closed.TryGetValue(neighbor, out var existing) && existing <= d + 1) continue;
+        if (nv == PalmTree)
+        {
+          if (!watered.ContainsKey(neighbor)) unwatered -= 1;
+          watered[neighbor] = d + 1;
+          sofar = watered.Values.Sum();
+          if (unwatered == 0)
+          {
+            yield return (sofar, true);
+            yield break;
+          }
+        }
+        closed[neighbor] = d + 1;
+        open.Enqueue(neighbor);
+      }
+      yield return (sofar + unwatered * (d + 1), false);
     }
 
     throw new ApplicationException();

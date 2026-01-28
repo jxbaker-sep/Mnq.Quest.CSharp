@@ -7,6 +7,11 @@ public record Point(long X, long Y) {
   public static Point operator+(Point point, Vector vector) => point with {Y = point.Y + vector.Y, X = point.X + vector.X};
   public static Point operator-(Point point, Vector vector) => point with {Y = point.Y - vector.Y, X = point.X - vector.X};
 
+    public override string ToString()
+    {
+        return $"{X},{Y}";
+    }
+
   public long ManhattanDistance(Point other) => Math.Abs(X-other.X) + Math.Abs(Y - other.Y);
 
   public IEnumerable<Point> CardinalNeighbors() => Vector.Cardinals.Select(v => this + v);
