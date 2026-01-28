@@ -10,16 +10,34 @@ namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 public partial class Quest19
 {
   [Theory]
-  [InlineData("Quest19.1.Sample.txt", "WIN")]
-  [InlineData("Quest19.1.txt", "3451799363427263")]
-  public void Part1(string inputFile, string expected)
+  [InlineData("Quest19.1.Sample.txt", 1, "WIN")]
+  [InlineData("Quest19.1.txt", 1, "3451799363427263")]
+  [InlineData("Quest19.2.Sample.txt", 100, "VICTORY")]
+  [InlineData("Quest19.2.txt", 100, "4515136565211891")]
+  [InlineData("Quest19.3.txt", 1048576000, "")]
+  public void Part1(string inputFile, int times, string expected)
   {
     var (commands, grid) = GetInput(inputFile);
 
-    Decode(commands, grid).Should().Be(expected);
+    foreach (var i in Enumerable.Range(0, times))
+    {
+      Decode(commands, grid);
+    }
+    FindMessage(grid).Should().Be(expected);
   }
 
-  string Decode(string commands, Grid<char> grid)
+  string FindMessage(Grid<char> grid)
+  {
+    return grid.Lines.Where(it => it.Contains('<') && it.Contains('>'))
+      .Select(it =>
+      {
+        var match = MyRegex().Match(it.Join());
+        return match.Groups[1].Value;
+      })
+      .First();
+  }
+
+  void Decode(string commands, Grid<char> grid)
   {
     var ll = new LinkedList<char>(commands);
     var node = ll.First!;
@@ -32,14 +50,6 @@ public partial class Quest19
         node = node.NextWrapped();
       }
     }
-
-    return grid.Lines.Where(it => it.Contains('<') && it.Contains('>'))
-      .Select(it =>
-      {
-        var match = MyRegex().Match(it.Join());
-        return match.Groups[1].Value;
-      })
-      .First();
   }
 
   record Direction(int Dx, int Dy);

@@ -9,9 +9,14 @@ public class Grid<T>
   public int Height { get; init; }
   public long Count => (long)Width * Height;
 
+  public Grid<T> Clone()
+  {
+    return new Grid<T>(Lines);
+  }
+
   public Grid(IEnumerable<IEnumerable<T>> input)
   {
-    Actual = input.Select(it => it.ToList()).ToList();
+    Actual = [.. input.Select(it => it.ToList())];
     Height = Actual.Count;
     Width = Actual[0].Count;
   }
