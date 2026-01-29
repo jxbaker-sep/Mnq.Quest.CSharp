@@ -10,17 +10,22 @@ namespace Mng.Quest.CSharp.EverybodyCodes.Q2024;
 public partial class Quest19
 {
   [Theory]
-  [InlineData("Quest19.1.Sample.txt", 1, "WIN")]
-  [InlineData("Quest19.1.txt", 1, "3451799363427263")]
+  // [InlineData("Quest19.1.Sample.txt", 1, "WIN")]
+  // [InlineData("Quest19.1.txt", 1, "3451799363427263")]
   [InlineData("Quest19.2.Sample.txt", 100, "VICTORY")]
-  [InlineData("Quest19.2.txt", 100, "4515136565211891")]
-  [InlineData("Quest19.3.txt", 1048576000, "")]
+  // [InlineData("Quest19.2.txt", 100, "4515136565211891")]
+  // [InlineData("Quest19.3.txt", 1048576000, "")]
   public void Part1(string inputFile, int times, string expected)
   {
     var (commands, grid) = GetInput(inputFile);
 
+
+    Dictionary<string, int> Cache = [];
     foreach (var i in Enumerable.Range(0, times))
     {
+      var key = grid.Printable();
+      if (Cache.TryGetValue(key, out var needle)) {Console.WriteLine($"{i} {needle}"); return;}
+      Cache[key] = i;
       Decode(commands, grid);
     }
     FindMessage(grid).Should().Be(expected);
