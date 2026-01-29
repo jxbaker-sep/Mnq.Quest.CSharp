@@ -33,7 +33,7 @@ public partial class Quest20
     while (open.TryDequeue(out var current))
     {
       var currentAltitude = closed[current];
-      foreach(var nextVector in new[]{current.Vector, current.Vector.RotateLeft(), current.Vector.RotateRight()})
+      foreach (var nextVector in new[] { current.Vector, current.Vector.RotateLeft(), current.Vector.RotateRight() })
       {
         var neighbor = current.Position + nextVector;
         var c = grid.Get(neighbor, Wall);
@@ -51,7 +51,7 @@ public partial class Quest20
         if (current.Seconds + 1 >= goalSeconds) continue;
         open.Enqueue((neighbor, current.Seconds + 1, nextVector));
       }
-      
+
     }
 
     closed.Where(it => it.Key.Seconds == goalSeconds).Max(it => it.Value).Should().Be(expected);
@@ -59,9 +59,9 @@ public partial class Quest20
 
   [Theory]
   [InlineData("Quest20.2.Sample.1.txt", 24)]
-  // [InlineData("Quest20.2.Sample.2.txt", 78)]
-  // [InlineData("Quest20.2.Sample.3.txt", 206)]
-  // [InlineData("Quest20.2.txt", 0)]
+  [InlineData("Quest20.2.Sample.2.txt", 78)]
+  [InlineData("Quest20.2.Sample.3.txt", 206)]
+  [InlineData("Quest20.2.txt", 538)]
   public void Part2(string inputFile, long expected)
   {
     const long startingAltitude = 10_000;
@@ -80,18 +80,29 @@ public partial class Quest20
 
     PriorityQueue<(Point Position, long Seconds, Vector Vector, Point Want, long Altitude)> open = new(current =>
     {
-      return current.Seconds +  minimalRemainders[current.Want] + current.Position.ManhattanDistance(current.Want);
+      var byCrowFlight = minimalRemainders[current.Want] + current.Position.ManhattanDistance(current.Want);
+      var byAltitude = current.Altitude > startingAltitude ? (current.Altitude - startingAltitude) / 2 : startingAltitude - current.Altitude;
+      return current.Seconds + Math.Max(byCrowFlight, byAltitude);
     });
     open.Enqueue((S, 0, Vector.South, A, startingAltitude));
 
+    Dictionary<(Point Position, Vector Vector, Point Want, long Altitude), long> closed = [];
+
+    // long temp = 0;
     while (open.TryDequeue(out var current))
     {
-      foreach(var nextVector in new[]{current.Vector, current.Vector.RotateLeft(), current.Vector.RotateRight()})
+      // if (current.Seconds != temp)
+      // {
+      //   var byCrowFlight = minimalRemainders[current.Want] + current.Position.ManhattanDistance(current.Want);
+      //   var byAltitude = current.Altitude > startingAltitude ? (current.Altitude - startingAltitude) / 2 : startingAltitude - current.Altitude;
+      //   Console.WriteLine($"{current.Seconds}: {current.Seconds + byCrowFlight}, {current.Seconds + byAltitude}");
+      //   temp = current.Seconds;
+      // }
+      foreach (var nextVector in new[] { current.Vector, current.Vector.RotateLeft(), current.Vector.RotateRight() })
       {
         var neighbor = current.Position + nextVector;
         var nextWant = current.Want;
         var currentAltitude = current.Altitude;
-        Console.WriteLine(current.Seconds);
         var c = grid.Get(neighbor, Wall);
         if (c == Wall) continue;
         if (checkpoints.Contains(neighbor))
@@ -119,15 +130,17 @@ public partial class Quest20
           _ => -1,
         };
         if (nextAltitude <= 0) continue;
+        if (closed.TryGetValue((neighbor, nextVector, nextWant, nextAltitude), out var foundSeconds) && foundSeconds <= current.Seconds + 1) continue;
+        closed[(neighbor, nextVector, nextWant, nextAltitude)] = current.Seconds + 1;
         open.Enqueue((neighbor, current.Seconds + 1, nextVector, nextWant, nextAltitude));
       }
-      
+
     }
 
     throw new ApplicationException();
   }
 
-  private static Grid<char>  GetInput(string inputFile)
+  private static Grid<char> GetInput(string inputFile)
   {
     return ECLoader.ReadLines(inputFile).Gridify();
   }
